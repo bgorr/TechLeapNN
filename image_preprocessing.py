@@ -13,7 +13,7 @@ lbl_dir = "D:/Documents/VIIRS_downloads/test_dataset/labels"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-for idx in range(len(os.listdir(img_dir))):
+for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
     img_files = [f for f in os.listdir(img_dir)]
     lbl_files = [g for g in os.listdir(lbl_dir)]
     img_path = os.path.join(img_dir, img_files[idx])
@@ -28,7 +28,7 @@ for idx in range(len(os.listdir(img_dir))):
         # M05: 0.662-0.682
         # M07: 0.846-0.885
         # M09: 1.371-1.386
-        if band == "M01" or band == "M03" or band == "M05" or band == "M07" or band == "M09": # or band == "M11" or band == "M15":  # band == "M03":
+        if band == "M01" or band == "M03" or band == "M05" or band == "M07" or band == "M09" or band == "M11" or band == "M15":  # band == "M03":
             band_data = bands[band]
             if img_data == []:
                 img_data = np.array(band_data)
@@ -44,7 +44,7 @@ for idx in range(len(os.listdir(img_dir))):
     # quality must be 3 for land observations. labels gives aerosol optical depth at X um
     for i in range(np.size(quality, 0)):
         for j in range(np.size(quality, 1)):
-            if quality == 3.0 and labels[i][j] > 0.3:
+            if labels[i][j] > 0.3:
                 labels[i][j] = 1.0
             else:
                 labels[i][j] = 0.0
@@ -67,7 +67,7 @@ for idx in range(len(os.listdir(img_dir))):
 
     # convert 3200x3200 images into 570 161x105 images
     patches = image.unfold(1, 161, 161).unfold(2, 105, 105)
-    patches = patches.contiguous().view(5, 570, 161, 105)
+    patches = patches.contiguous().view(7, 570, 161, 105)
     lbl_patches = label.unfold(0, 161, 161).unfold(1, 105, 105)
     lbl_patches = lbl_patches.contiguous().view(-1, 1, 161, 105)
     patches = patches.permute(1, 0, 2, 3)
@@ -138,7 +138,7 @@ for i in range(totalTensor.size(0)):
     dataset.append((image, target3))
 
 # save dataset
-filename = './output/test_dataset_ready.p'
+filename = './output/test_dataset_ready_7bands.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()

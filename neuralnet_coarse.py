@@ -25,11 +25,11 @@ warnings.filterwarnings("error")
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(7, 32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(7, 32, kernel_size=3, padding=1) # num_bands
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        # self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.mp = nn.MaxPool2d(2)
-        self.fc = nn.Linear(33280, 2)
+        self.fc = nn.Linear(36864, 2)
 
     def forward(self, x):
         in_size = x.size(0)
@@ -37,12 +37,12 @@ class CNN(nn.Module):
         x1 = self.mp(x1)  # size=(N, 32, x.H/2, x.W/2)
         x2 = F.relu(self.conv2(x1))
         x2 = self.mp(x2)  # size=(N, 64, x.H/4, x.H/4)
-        x3 = F.relu(self.conv3(x2))
-        x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
-        x4 = x3.view(in_size, -1)
+        # x3 = F.relu(self.conv3(x2))
+        # x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
+        x4 = x2.view(in_size, -1)
         x4 = self.fc(x4)  # size=(N, n_class)
         y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
-        return x1, x2, x3, x4, y
+        return x1, x2, x4, y
 
 
 # encoding/decoding
@@ -53,22 +53,22 @@ class FCN8s(nn.Module):
         self.n_class = n_class
         self.pretrained_net = pretrained_net
         self.relu = nn.ReLU(inplace=True)
-        self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
+        # self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
+        # self.bn1 = nn.BatchNorm2d(64)
         self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn2 = nn.BatchNorm2d(32)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1, output_padding=1)
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn3 = nn.BatchNorm2d(16)
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
     def forward(self, x):
         output = self.pretrained_net(x)
-        x3 = output[2]
+        # x3 = output[2]
         x2 = output[1]
         x1 = output[0]
-        score = self.relu(self.deconv1(x3))
-        score = self.bn1(score + x2)
-        score = self.relu(self.deconv2(score))
+        # score = self.relu(self.deconv1(x3))
+        # score = self.bn1(score + x2)
+        score = self.relu(self.deconv2(x2))
         score = self.bn2(score + x1)
         score = self.bn3(self.relu(self.deconv3(score)))
         score = self.classifier(score)
@@ -102,17 +102,8 @@ def iou(p, t):
     try:
         IoU = intersection / union.astype(np.float32)
     except RuntimeWarning:
+        print("invalid value encountered in true_divide")
         IoU = [0, 1]
-        print("Union is 0.")
-        # if (union[0] == 0 and union[1] == 0):
-        #     print("Union of both classes is 0")
-        #     IoU = [0, 0]
-        # elif (union[0] == 0):
-        #     print("Union of class 0 is 0")
-        #     IoU = [0, intersection[1] / union[1]]
-        # else:
-        #     print("Union of class 1 is 0")
-        #     IoU = [intersection[0] / union[0], 0]
     return np.mean(IoU), current, IoU[0], IoU[1]
 
 
@@ -163,16 +154,16 @@ def test(doSave, threshold):
 torch.cuda.empty_cache()
 DEVICE = "cpu"
 # network settings
-batch_size = 1
+batch_size = 2
 n_class = 2
-n_epochs = 1
+n_epochs = 30
 
 # set threshold
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-test_filename = "./output/test_dataset_ready_7bands.p"
-train_filename = "./output/train_dataset_ready_7bands.p"
+test_filename = "./output/test_dataset_coarse_7bands.p"
+train_filename = "./output/train_dataset_coarse_7bands.p"
 test_f = open(test_filename, "rb")
 train_f = open(train_filename, "rb")
 test_dataset_l = pickle.load(test_f)
@@ -188,13 +179,12 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset_l, batch_size=bat
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
-weights = torch.tensor([9, 1], dtype=torch.float32)
+optimizer = optim.SGD(model.parameters(), lr=3e-4, momentum=0.5)
+weights = torch.tensor([1, 9], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
-# loss_fn = nn.CrossEntropyLoss(weight=weights)
-loss_fn = nn.BCELoss()
+loss_fn = nn.CrossEntropyLoss(weight=weights)
 
 # run for NT Data Set
 for epoch in range(n_epochs):
@@ -204,11 +194,6 @@ for epoch in range(n_epochs):
 test_dat = []
 for dat, _ in test_loader:
     test_dat.append(dat)
-
-results_filename = './output/results.p'
-results_f = open(results_filename, 'wb')
-pickle.dump(results, results_f)
-results_f.close()
 
 matplotlib.use('Agg')
 
@@ -225,8 +210,8 @@ for i in range(len(results[0])):
         red = X[j, 2, :, :].detach().numpy()
         ir = X[j, 3, :, :].detach().numpy()
         swir = X[j, 4, :, :].detach().numpy()
-        clouds = X[j, 5, :, :].detach().numpy()
-        temp = X[j, 6, :, :].detach().numpy()
+        # clouds = X[j, 5, :, :].detach().numpy()
+        # temp = X[j, 6, :, :].detach().numpy()
         img = np.array([red, blue, green])
         img = np.moveaxis(img, 0, -1)
         for n in range(3):
@@ -238,25 +223,26 @@ for i in range(len(results[0])):
         yhat = Yhat[j, :, :].detach().numpy()
         yest = Yest[j, :, :].detach().numpy()
         # plt.ion()
-        plt.subplot(2, 5, 1)
+        plt.subplot(2, 4, 1)
         plt.imshow(img)
-        plt.subplot(2, 5, 2)
+        plt.subplot(2, 4, 2)
         plt.imshow(red)
-        plt.subplot(2, 5, 3)
+        plt.subplot(2, 4, 3)
         plt.imshow(ir)
-        plt.subplot(2, 5, 4)
+        plt.subplot(2, 4, 4)
         plt.imshow(swir)
-        plt.subplot(2, 5, 5)
-        plt.imshow(clouds)
-        plt.subplot(2, 5, 6)
-        plt.imshow(temp)
-        plt.subplot(2, 5, 7)
+        plt.subplot(2, 4, 5)
         plt.imshow(z)
-        plt.subplot(2, 5, 8)
+        plt.subplot(2, 4, 6)
         plt.imshow(y)
-        plt.subplot(2, 5, 9)
+        plt.subplot(2, 4, 7)
         plt.imshow(yhat)
-        plt.subplot(2, 5, 10)
+        plt.subplot(2, 4, 8)
         plt.imshow(yest)
-        plt.savefig('D:/Dropbox/Dropbox/TechLeap/allplots/fig{}{}.png'.format(i, j))
+        plt.savefig('./allplots/fig{}{}.png'.format(i, j))
         plt.close('all')
+
+results_filename = './output/results.p'
+results_f = open(results_filename, 'wb')
+pickle.dump(results, results_f)
+results_f.close()

@@ -1,5 +1,5 @@
-/allplots_cloudmask/**
-/allplots/**
-/venv/**
-/output/**
-.idea/**
+/allplots_cloudmask/*
+/allplots/
+/venv/*
+/output/
+.idea/*

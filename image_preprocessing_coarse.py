@@ -22,13 +22,13 @@ from mpl_toolkits import axes_grid1
 
 import pickle
 
-img_dir = "D:/Documents/VIIRS_downloads/test_dataset/images"
-lbl_dir = "D:/Documents/VIIRS_downloads/test_dataset/labels"
+img_dir = "D:/Documents/VIIRS_downloads/training_dataset/images"
+lbl_dir = "D:/Documents/VIIRS_downloads/training_dataset/labels"
 # "D:/Documents/VIIRS_downloads/test_dataset"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
+for idx in range(len(os.listdir(img_dir))):
     img_files = [f for f in os.listdir(img_dir)]
     lbl_files = [g for g in os.listdir(lbl_dir)]
     img_path = os.path.join(img_dir, img_files[idx])
@@ -37,7 +37,7 @@ for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
     bands = image_ds['observation_data'].variables
     img_data = []
     for band in bands:
-        if band == "M01" or band == "M03" or band == "M05" or band == "M07" or band == "M09": # or band == "M11" or band == "M15":  # band == "M03":
+        if band == "M01" or band == "M03" or band == "M05" or band == "M07" or band == "M09" or band == "M11" or band == "M15":  # band == "M03":
             band_data = bands[band]
             if img_data == []:
                 img_data = np.array(band_data)
@@ -59,17 +59,23 @@ for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
     img_data = np.ma.masked_greater(img_data, 6.55e4)
     nan_mask = np.ma.getmask(img_data[0, :, :])
     img_data = np.ma.filled(img_data, np.nan)
-    new_img = np.zeros(shape=(5,404,400))
+    count = 0
+    for i in range(len(img_data[5, :, 0])):
+        for j in range(len(img_data[5, 0, :])):
+            if img_data[5, i, j] == np.nan:
+                count = count + 1
+    print("Nan count: ", count)
+    new_img = np.zeros(shape=(7, 404, 400))
     for i in range(5):
         band = img_data[i, :, :]
-        band = cv2.resize(band, dsize=(400, 404), interpolation=cv2.INTER_CUBIC)
-        new_img[i,:,:] = band
+        band = cv2.resize(band, dsize=(400, 404), interpolation=cv2.INTER_NEAREST)
+        new_img[i, :, :] = band
     image = torch.as_tensor(new_img)
     label = torch.as_tensor(labels)
     height = 96
     width = 96
     patches = image.unfold(1, height, height).unfold(2, width, width)
-    patches = patches.contiguous().view(5, 16, height, width)
+    patches = patches.contiguous().view(7, 16, height, width)
     lbl_patches = label.unfold(0, height, height).unfold(1, width, width)
     lbl_patches = lbl_patches.contiguous().view(-1, 1, height, width)
     patches = patches.permute(1, 0, 2, 3)
@@ -78,15 +84,18 @@ for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
         if patches[i, :, :, :].isnan().any():
             patches = torch.cat([patches[0:i, :, :, :], patches[i + 1:-1, :, :, :]])
             lbl_patches = torch.cat([lbl_patches[0:i, :, :, :], lbl_patches[i + 1:-1, :, :, :]])
+            print("Image with nans")
         else:
             i = i + 1
     # do mean and normalization by band!!! try debugging below code
+    if (patches.size(0) == 0):
+        continue
     for i in range(patches.size(1)):
         AA = patches[:, i, :, :].clone()
         AA = AA.view(patches.size(0), -1)
         AA -= AA.mean(1, keepdim=True)[0]
         AA /= AA.std(1, keepdim=True)[0]
-        AA = AA.view(patches.size(0), 161, 105)
+        AA = AA.view(patches.size(0), height, width)
         patches[:, i, :, :] = AA
 
     # blue = patches[idx, 0, :, :].detach().numpy()
@@ -134,7 +143,7 @@ for i in range(totalTensor.size(0)):
         target3[c][target22[:, :, 0] == c] = 1
     dataset.append((image, target3))
 
-filename = './output/test_dataset_coarse.p'
+filename = './output/train_dataset_coarse_7bands.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()
