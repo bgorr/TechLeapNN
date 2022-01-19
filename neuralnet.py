@@ -163,12 +163,12 @@ def test(doSave, threshold):
 torch.cuda.empty_cache()
 DEVICE = "cpu"
 # network settings
-batch_size = 1
+batch_size = 5
 n_class = 2
-n_epochs = 1
+n_epochs = 25
 
 # set threshold
-thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
+thres = torch.Tensor([.5]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
 test_filename = "./output/test_dataset_ready_7bands.p"
@@ -189,12 +189,12 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset_l, batch_size=bat
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
-weights = torch.tensor([9, 1], dtype=torch.float32)
+weights = torch.tensor([1, 9], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
-# loss_fn = nn.CrossEntropyLoss(weight=weights)
-loss_fn = nn.BCELoss()
+loss_fn = nn.CrossEntropyLoss(weight=weights)
+#loss_fn = nn.BCELoss()
 
 # run for NT Data Set
 for epoch in range(n_epochs):
