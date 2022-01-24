@@ -4,16 +4,17 @@ import cv2
 import numpy as np
 import torch
 from torchvision import transforms
+from torch.autograd import Variable
 
 import pickle
 
 # you'll have to point these to your dataset location
-img_dir = "D:/Documents/VIIRS_downloads/test_dataset/images"
-lbl_dir = "D:/Documents/VIIRS_downloads/test_dataset/labels"
+img_dir = "D:/Documents/VIIRS_downloads/training_dataset/images"
+lbl_dir = "D:/Documents/VIIRS_downloads/training_dataset/labels"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
+for idx in range(10): # len(os.listdir(img_dir))
     img_files = [f for f in os.listdir(img_dir)]
     lbl_files = [g for g in os.listdir(lbl_dir)]
     img_path = os.path.join(img_dir, img_files[idx])
@@ -75,7 +76,7 @@ for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
     # eliminate entries with nan values (can't pass nan values into neural net)
     i = 0
     while i < patches.size(0):
-        if patches[i, :, :, :].isnan().any():
+        if patches[i, :, :, :].isnan().any() or not torch.isin(1, lbl_patches[i, :, :, :]).any():
             patches = torch.cat([patches[0:i, :, :, :], patches[i + 1:-1, :, :, :]])
             lbl_patches = torch.cat([lbl_patches[0:i, :, :, :], lbl_patches[i + 1:-1, :, :, :]])
         else:
@@ -126,19 +127,39 @@ for idx in range(len(os.listdir(img_dir))): # len(os.listdir(img_dir))
     lbl_totalTensor = torch.cat((lbl_totalTensor, lbl_patches), 0)
 
 # reshape tensors for neural net, one hot encoding
+W = torch.empty(1, 1, 3, 3)
+W[0, 0, :, :] = torch.Tensor([[.111, .111, .111], [.111, .111, .111], [.111, .111, .111]])  # .111~1/9
+W = torch.nn.Parameter(W)
+my_conv = torch.nn.Conv2d(1, 1, kernel_size=3, padding=1, stride=1, bias=False)
+my_conv.weight = W
+# dataset = list()
+# for i in range(totalTensor.size(0)):
+#     image = totalTensor[i, :, :, :].clone()
+#     labels = lbl_totalTensor[i, :, :, :].clone()
+#     target22 = labels.permute(1, 2, 0)
+#     h, w, k = target22.shape
+#     target3 = torch.zeros(2, h, w)
+#     for c in range(2):
+#         target3[c][target22[:, :, 0] == c] = 1
+#     dataset.append((image, target3))
+
 dataset = list()
 for i in range(totalTensor.size(0)):
-    image = totalTensor[i, :, :, :].clone()
-    labels = lbl_totalTensor[i, :, :, :].clone()
-    target22 = labels.permute(1, 2, 0)
+    dat = totalTensor[i, :, :, :].clone()
+    target = lbl_totalTensor[i, :, :, :].clone()
+    dat, target = Variable(dat).float(), Variable(target).float()
+    target0 = torch.FloatTensor(target)
+    target1 = my_conv(torch.unsqueeze(target0.permute(0, 1, 2), 0))
+    target2 = (target1 > 0.5).float() * 1
+    target22 = target2[0, :, :, :].permute(1, 2, 0)
     h, w, k = target22.shape
     target3 = torch.zeros(2, h, w)
     for c in range(2):
         target3[c][target22[:, :, 0] == c] = 1
-    dataset.append((image, target3))
+    dataset.append((dat, target3))
 
 # save dataset
-filename = './output/test_dataset_ready_7bands.p'
+filename = './output/train_dataset_ready_7bands.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()

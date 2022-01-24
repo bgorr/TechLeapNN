@@ -1,3 +1,4 @@
+import math
 import os
 
 import matplotlib
@@ -18,9 +19,25 @@ from mpl_toolkits import axes_grid1
 import pickle
 import warnings
 
-warnings.filterwarnings("error")
+#warnings.filterwarnings("error")
 
+# PyTorch
+class DiceLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(DiceLoss, self).__init__()
 
+    def forward(self, inputs, targets, smooth=1):
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        #inputs = F.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        intersection = (inputs * targets).sum()
+        dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+
+        return 1 - dice
 # encoding
 class CNN(nn.Module):
     def __init__(self):
@@ -92,47 +109,87 @@ def train(epoch):
                        100. * batch_idx / len(train_loader), loss.item()))
 
 
-# IoU for binary case
 def iou(p, t):
     current = confusion_matrix(t.numpy().flatten(), p.numpy().flatten(), labels=[0, 1])
     intersection = np.diag(current)
     ground_truth_set = current.sum(axis=1)  # rows
     predicted_set = current.sum(axis=0)  # columns
     union = ground_truth_set + predicted_set - intersection
-    try:
-        IoU = intersection / union.astype(np.float32)
-    except RuntimeWarning:
-        IoU = [0, 1]
-        print("Union is 0.")
-        # if (union[0] == 0 and union[1] == 0):
-        #     print("Union of both classes is 0")
-        #     IoU = [0, 0]
-        # elif (union[0] == 0):
-        #     print("Union of class 0 is 0")
-        #     IoU = [0, intersection[1] / union[1]]
-        # else:
-        #     print("Union of class 1 is 0")
-        #     IoU = [intersection[0] / union[0], 0]
+    IoU = intersection / union.astype(np.float32)
     return np.mean(IoU), current, IoU[0], IoU[1]
 
 
-# accuracy for binary case
 def pixel_acc(p, t):
-    p = p.cpu()
-    t = t.cpu()
     correct_pixels = (p == t).sum().to(dtype=torch.float)
     total_pixels = (t == t).sum().to(dtype=torch.float)
     return correct_pixels / total_pixels
 
 
-# test
+def calc_acc(p, t):
+    correct_pixels = (p == t).sum().to(dtype=torch.float)
+    total_pixels = (t == t).sum().to(dtype=torch.float)
+    return correct_pixels / total_pixels
+
+
+def calc_iou(p, t):
+    current = confusion_matrix(t.numpy().flatten(), p.numpy().flatten(), labels=[0, 1])
+    intersection = np.diag(current)
+    ground_truth_set = current.sum(axis=1)  # rows
+    predicted_set = current.sum(axis=0)  # columns
+    union = ground_truth_set + predicted_set - intersection
+    IoU = intersection / union.astype(np.float32)
+    tp = IoU[1]
+    tn = IoU[0]
+    if math.isnan(tp):
+        tp = 0
+    if math.isnan(tn):
+        tn = 0
+    iou = (tp + tn) / 2
+    return tp, tn, iou
+
+
+def calc_wiou(p, t):
+    N = len(t)
+    w_TP = np.zeros(N)
+    w_TN = np.zeros(N)
+    IoU = np.zeros(N)
+    IoU_TP = np.zeros(N)
+    IoU_TN = np.zeros(N)
+    for j in range(N):
+        pred, tar = p[j], t[j]
+        w_TP[j] = sum(sum(tar))
+        w_TN[j] = sum(sum(1 - tar))
+        IoU_TP[j], IoU_TN[j], IoU[j] = calc_iou(p=pred, t=tar)
+    wIoU_TP = sum(w_TP * IoU_TP) / sum(w_TP)
+    if math.isnan(wIoU_TP):
+        wIoU_TP = 0
+    wIoU_TN = sum(w_TN * IoU_TN) / sum(w_TN)
+    if math.isnan(wIoU_TN):
+        wIoU_TN = 0
+    return wIoU_TP, wIoU_TN, IoU_TP, IoU_TN, IoU
+
+
+def listMean(my_list, mean_type):
+    if mean_type == 1:
+        avg1 = [float(sum(col))/len(col) for col in zip(*my_list)]
+        return sum(avg1)/len(avg1)
+    if mean_type == 2:
+        return sum(my_list)/len(my_list)
+
+
+def round_metrics(a, b, c, d, e, f, r):
+    return round(a, r)*100, round(b, r)*100, round(c, r)*100, round(d, r)*100, round(e, r)*100, round(f, r)*100
+
+
 def test(doSave, threshold):
     model.eval()
     n_batches = 0
-    total_acc = []
+    acc = []
     iou_mn = []
     iou_tp = []
     iou_tn = []
+    wiou_tp = []
+    wiou_tn = []
     all_targets = []
     all_out = []
     all_output = []
@@ -140,35 +197,43 @@ def test(doSave, threshold):
     for data, target in test_loader:
         n_batches += 1
         data, target = \
-            Variable(data).float().to(DEVICE), Variable(target).float().to(DEVICE)
-        out = model(data).to(DEVICE)
-        output = torch.sigmoid(out).to(DEVICE)
+            Variable(data).float(), Variable(target).float()
+        out = model(data)
+        output = torch.sigmoid(out)
         pred = (output[:, 1, :, :] > threshold).float() * 1
-        total_acc.append(pixel_acc(p=pred.long(), t=target[:, 1, :, :].long()))
-        iou_output = iou(p=pred.long(), t=target[:, 1, :, :].long())
-        iou_mn.append(iou_output[0])
-        iou_tn.append(iou_output[2])
-        iou_tp.append(iou_output[3])
+        acc.append(calc_acc(p=pred.long(), t=target[:, 1, :, :].long()))
+        iou_out = calc_wiou(p=pred, t=target[:, 1, :, :])
+        wiou_tp.append(iou_out[0])
+        wiou_tn.append(iou_out[1])
+        iou_tp.append(iou_out[2])
+        iou_tn.append(iou_out[3])
+        iou_mn.append(iou_out[4])
         if doSave:
             all_targets.append(target[:, 1, :, :])
             all_out.append(out[:, 1, :, :])
             all_output.append(output[:, 1, :, :])
             all_pred.append(pred)
-    print('\nTest Epoch: {}\t Mean Batch Accuracy: {}%, Mean Batch IoU: {}%, TP IoU: {}%, TN IoU = {}%\n'.format(
-        epoch, round(100 * np.array(total_acc).mean(), 2), round(100 * np.array(iou_mn).mean(), 2),
-        round(100 * np.array(iou_tp).mean(), 2), round(100 * np.array(iou_tn).mean(), 2)))
+    aa = np.array(acc).mean()
+    bb = listMean(iou_mn, 1)
+    cc = listMean(iou_tp, 1)
+    dd = listMean(wiou_tp, 2)
+    ee = listMean(iou_tn, 1)
+    ff = listMean(wiou_tn, 2)
+    print('\nTest Epoch: {}\t Accuracy: {}%, IoU: {}%, TP IoU: {}({})%, TN IoU = {}({})%\n'.format(
+        epoch, round(100 * aa, 2), round(100 * bb, 2), round(100 * cc, 2), round(100 * dd, 2),
+        round(100 * ee, 2), round(100 * ff, 2)))
     return all_targets, all_out, all_output, all_pred
 
 
 torch.cuda.empty_cache()
 DEVICE = "cpu"
 # network settings
-batch_size = 5
+batch_size = 64
 n_class = 2
-n_epochs = 25
+n_epochs = 50
 
 # set threshold
-thres = torch.Tensor([.5]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
+thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
 test_filename = "./output/test_dataset_ready_7bands.p"
@@ -188,13 +253,14 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset_l, batch_size=bat
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
-weights = torch.tensor([1, 9], dtype=torch.float32)
+optimizer = optim.SGD(model.parameters(), lr=3e-4, momentum=0.99)
+weights = torch.tensor([1, 99], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
-loss_fn = nn.CrossEntropyLoss(weight=weights)
+#loss_fn = nn.CrossEntropyLoss(weight=weights)
 #loss_fn = nn.BCELoss()
+loss_fn = DiceLoss()
 
 # run for NT Data Set
 for epoch in range(n_epochs):
