@@ -1,7 +1,6 @@
 import os
 import netCDF4
 import cv2
-import pandas as pd
 import numpy as np
 import torch
 import torch.nn as nn
@@ -22,17 +21,24 @@ from mpl_toolkits import axes_grid1
 
 import pickle
 
-img_dir = "D:/Documents/VIIRS_downloads/training_dataset/images"
-lbl_dir = "D:/Documents/VIIRS_downloads/training_dataset/labels"
+plt.switch_backend('TkAgg')
+img_dir = "/home/ben/Documents/VIIRS_downloads/test_dataset/images"
+lbl_dir = "/home/ben/Documents/VIIRS_downloads/test_dataset/labels"
 # "D:/Documents/VIIRS_downloads/test_dataset"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-for idx in range(len(os.listdir(img_dir))):
+for idx in range(1):
+    print(idx)
     img_files = [f for f in os.listdir(img_dir)]
     lbl_files = [g for g in os.listdir(lbl_dir)]
     img_path = os.path.join(img_dir, img_files[idx])
-    lbl_path = os.path.join(lbl_dir, lbl_files[idx])
+    substring = img_files[idx][14:22]
+    final_list = [nm for nm in lbl_files if substring in nm]
+    lbl_path = final_list[0]
+    if not lbl_path:
+        continue
+    lbl_path = os.path.join(lbl_dir, lbl_path)
     image_ds = netCDF4.Dataset(img_path)
     bands = image_ds['observation_data'].variables
     img_data = []
@@ -59,14 +65,17 @@ for idx in range(len(os.listdir(img_dir))):
     img_data = np.ma.masked_greater(img_data, 6.55e4)
     nan_mask = np.ma.getmask(img_data[0, :, :])
     img_data = np.ma.filled(img_data, np.nan)
-    count = 0
-    for i in range(len(img_data[5, :, 0])):
-        for j in range(len(img_data[5, 0, :])):
-            if img_data[5, i, j] == np.nan:
-                count = count + 1
-    print("Nan count: ", count)
+
+    ind = 0
+    while ind < np.size(img_data,1):
+        if np.isnan(img_data[0,ind,0]):
+            img_data = np.delete(img_data, ind, 1)
+        else:
+            ind = ind + 1
+    mask = img_data[np.isnan(img_data)]
+    #dst = cv2.inpaint(img_data, mask, 3, cv2.INPAINT_TELEA)
     new_img = np.zeros(shape=(7, 404, 400))
-    for i in range(5):
+    for i in range(7):
         band = img_data[i, :, :]
         band = cv2.resize(band, dsize=(400, 404), interpolation=cv2.INTER_NEAREST)
         new_img[i, :, :] = band
@@ -88,7 +97,7 @@ for idx in range(len(os.listdir(img_dir))):
         else:
             i = i + 1
     # do mean and normalization by band!!! try debugging below code
-    if (patches.size(0) == 0):
+    if patches.size(0) == 0:
         continue
     for i in range(patches.size(1)):
         AA = patches[:, i, :, :].clone()
@@ -113,7 +122,6 @@ for idx in range(len(os.listdir(img_dir))):
     #     img[:, :, i] = (img[:, :, i] - mn) / (mx - mn)
     # cloud_img = patches[idx, 0, :, :]
     # cloud_lbl = lbl_patches[idx, 0, :, :]
-    # plt.ion()
     # plt.subplot(2, 3, 1)
     # plt.imshow(img)
     # plt.subplot(2, 3, 2)
@@ -133,7 +141,7 @@ for idx in range(len(os.listdir(img_dir))):
     lbl_totalTensor = torch.cat((lbl_totalTensor, lbl_patches), 0)
 
 dataset = list()
-for i in range(totalTensor.size(0)):
+for i in range(1):
     image = totalTensor[i, :, :, :].clone()
     labels = lbl_totalTensor[i, :, :, :].clone()
     target22 = labels.permute(1, 2, 0)
@@ -143,7 +151,7 @@ for i in range(totalTensor.size(0)):
         target3[c][target22[:, :, 0] == c] = 1
     dataset.append((image, target3))
 
-filename = './output/train_dataset_coarse_7bands.p'
+filename = './output/test_dataset_coarse_7bands_1image.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()
