@@ -39,10 +39,10 @@ class CNN(nn.Module):
         x2 = self.mp(x2)  # size=(N, 64, x.H/4, x.H/4)
         # x3 = F.relu(self.conv3(x2))
         # x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
-        x4 = x2.view(in_size, -1)
-        x4 = self.fc(x4)  # size=(N, n_class)
-        y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
-        return x1, x2, x4, y
+        # x4 = x2.view(in_size, -1)
+        # x4 = self.fc(x4)  # size=(N, n_class)
+        # y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
+        return x1, x2 #, x4, y
 
 
 # encoding/decoding
@@ -154,16 +154,16 @@ def test(doSave, threshold):
 torch.cuda.empty_cache()
 DEVICE = "cpu"
 # network settings
-batch_size = 2
+batch_size = 1
 n_class = 2
-n_epochs = 30
+n_epochs = 1
 
 # set threshold
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-test_filename = "./output/test_dataset_coarse_7bands.p"
-train_filename = "./output/train_dataset_coarse_7bands.p"
+test_filename = "./output/train_dataset_coarse_7bands_1image.p"
+train_filename = "./output/train_dataset_coarse_7bands_1image.p"
 test_f = open(test_filename, "rb")
 train_f = open(train_filename, "rb")
 test_dataset_l = pickle.load(test_f)

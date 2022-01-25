@@ -4,11 +4,13 @@ import sys
 #from tensorflow import keras
 import cv2
 #import struct
+from matplotlib import pyplot as plt
 from spectral import *
 #import spectral.io.envi as envi
 
 np.set_printoptions(threshold = sys.maxsize)
 
+plt.switch_backend('TkAgg')
 
 #### Useful functions
 def find_clip_val_channel(channel_ndarray):
@@ -22,8 +24,8 @@ def find_clip_val_channel(channel_ndarray):
     return clip_val
 
 #### Unpack image file (binary 32-bit little-endian floating point IEEE)
-filepath = 'D:\\Downloads\\AVIRIS data\\' # change to actual hard drive path
-img_names = ['ang20170618t194516_corr_v2p7_img']
+filepath = '/home/ben/Documents/AVIRIS_data/' # change to actual hard drive path
+img_names = ['ang20171003t212656_corr_v2p10_img']
 header_names = [s + '.hdr' for s in img_names]
 header_filepath = filepath + header_names[0]
 
@@ -90,20 +92,27 @@ for i in range(len(img_names)):
 
     preprocessed_images[dict_key] = current_image_preprocessed
     #imshow(current_image_preprocessed)
-numRows = 20
+numRows = 40
 numCols = 4
 sizeX = np.size(rgb_corr_vals, 1)
 sizeY = np.size(rgb_corr_vals, 0)
 print(np.floor(sizeY/numRows))
 print(np.floor(sizeX/numCols))
+#big_image = preprocessed_images['img0']
+big_image = rgb_img_vals/64
 image_dataset = np.zeros(shape=(numRows*numCols,int(np.floor(sizeY/numRows)),int(np.floor(sizeX/numCols)), 3))
 idx = 0
 #img = cv2.imread(rgb_img_vals)
 for i in range(numRows):
     for j in range(numCols):
-        roi = rgb_img_vals[int(i*sizeY/numRows):int(i*sizeY/numRows + sizeY/numRows), int(j*sizeX/numCols):int(j*sizeX/numCols + sizeX/numCols), :]
+        roi = big_image[i*int(sizeY/numRows):i*int(sizeY/numRows) + int(sizeY/numRows), j*int(sizeX/numCols):j*int(sizeX/numCols) + int(sizeX/numCols), :]
         image_dataset[idx,:,:,:] = roi
         idx = idx + 1
+for i in range(np.size(image_dataset,0)):
+    image = image_dataset[i]
+    plt.imshow(image)
+    plt.savefig('./allplots/fig{}.png'.format(i))
+    plt.close('all')
 len(rgb_corr_vals)
 len(rgb_corr_vals[0])
 len(rgb_corr_vals[0][0])

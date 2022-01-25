@@ -3,22 +3,33 @@ import netCDF4
 import cv2
 import numpy as np
 import torch
+import glob
 from torchvision import transforms
 from torch.autograd import Variable
+
+import matplotlib.pyplot as plt
+
+plt.switch_backend('TkAgg')
 
 import pickle
 
 # you'll have to point these to your dataset location
-img_dir = "D:/Documents/VIIRS_downloads/training_dataset/images"
-lbl_dir = "D:/Documents/VIIRS_downloads/training_dataset/labels"
+img_dir = "/home/ben/Documents/VIIRS_downloads/training_dataset/images"
+lbl_dir = "/home/ben/Documents/VIIRS_downloads/training_dataset/labels"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-for idx in range(10): # len(os.listdir(img_dir))
+for idx in range(len(os.listdir(img_dir))):  # len(os.listdir(img_dir))
+    print(idx)
     img_files = [f for f in os.listdir(img_dir)]
     lbl_files = [g for g in os.listdir(lbl_dir)]
+    substring = [img_files[idx][14:22]]
+    final_list = [nm for ps in substring for nm in lbl_files if ps in nm]
+    lbl_path = final_list[0]
+    if not lbl_path:
+        continue
     img_path = os.path.join(img_dir, img_files[idx])
-    lbl_path = os.path.join(lbl_dir, lbl_files[idx])
+    lbl_path = os.path.join(lbl_dir, lbl_path)
     image_ds = netCDF4.Dataset(img_path)
     bands = image_ds['observation_data'].variables
     img_data = []
@@ -51,14 +62,22 @@ for idx in range(10): # len(os.listdir(img_dir))
                 labels[i][j] = 0.0
 
     # resize labels from 404x400 to 3200x3200
-    labels = cv2.resize(labels, dsize=(3200, 3200), interpolation=cv2.INTER_NEAREST_EXACT)
-    img_data = np.ma.masked_greater(img_data, 6.55e4) # mask outliers
+    labels = cv2.resize(labels, dsize=(3200, np.size(img_data, 1)), interpolation=cv2.INTER_NEAREST_EXACT)
+    img_data = np.ma.masked_greater(img_data, 6.55e4)  # mask outliers
     nan_mask = np.ma.getmask(img_data[0, :, :])
     img_data = np.ma.filled(img_data, np.nan)
+    ind = 0
+    while ind < np.size(img_data, 1):
+        if np.isnan(img_data[0, ind, 0]):
+            img_data = np.delete(img_data, ind, 1)
+            labels = np.delete(labels, ind, 0)
+        else:
+            ind = ind + 1
     image = torch.as_tensor(img_data)
     label = torch.as_tensor(labels)
-    p = transforms.Compose([transforms.CenterCrop([3200, 3200])]) # crop from 3232x3200 to 3200x3200
-    image = p(image)
+    # p = transforms.Compose([transforms.CenterCrop([3200, 3200])]) # crop from 3232x3200 to 3200x3200
+    # image = p(image)
+    # label = p(label)
 
     # # plot image
     # full_img = np.array(image[0,:, :])
@@ -67,8 +86,9 @@ for idx in range(10): # len(os.listdir(img_dir))
     # plt.close()
 
     # convert 3200x3200 images into 570 161x105 images
+    # label = label.permute(1, 0)
     patches = image.unfold(1, 161, 161).unfold(2, 105, 105)
-    patches = patches.contiguous().view(7, 570, 161, 105)
+    patches = patches.contiguous().view(7, 450, 161, 105)
     lbl_patches = label.unfold(0, 161, 161).unfold(1, 105, 105)
     lbl_patches = lbl_patches.contiguous().view(-1, 1, 161, 105)
     patches = patches.permute(1, 0, 2, 3)
@@ -81,7 +101,8 @@ for idx in range(10): # len(os.listdir(img_dir))
             lbl_patches = torch.cat([lbl_patches[0:i, :, :, :], lbl_patches[i + 1:-1, :, :, :]])
         else:
             i = i + 1
-
+    if patches.size(0) == 0:
+        continue
     # do mean and unit variance by band
     for i in range(patches.size(1)):
         AA = patches[:, i, :, :].clone()
@@ -91,37 +112,37 @@ for idx in range(10): # len(os.listdir(img_dir))
         AA = AA.view(patches.size(0), 161, 105)
         patches[:, i, :, :] = AA
 
-    # # plotting for sanity check
-    # blue = patches[idx, 0, :, :].detach().numpy()
-    # green = patches[idx, 1, :, :].detach().numpy()
-    # red = patches[idx, 2, :, :].detach().numpy()
-    # ir = patches[idx, 3, :, :].detach().numpy()
-    # swir = patches[idx, 4, :, :].detach().numpy()
-    # # clouds = patches[idx, 5, :, :].detach().numpy()
-    # # temp = patches[idx, 6, :, :].detach().numpy()
-    # img = np.array([red, blue, green])
-    # img = np.moveaxis(img, 0, -1)
-    # for i in range(3):
-    #     mx = np.max(img[:, :, i])
-    #     mn = np.min(img[:, :, i])
-    #     img[:, :, i] = (img[:, :, i] - mn) / (mx - mn)
-    # cloud_img = patches[idx, 0, :, :]
-    # cloud_lbl = lbl_patches[idx, 0, :, :]
-    # plt.ion()
-    # plt.subplot(2, 2, 1)
-    # plt.imshow(img)
-    # plt.subplot(2, 2, 2)
-    # plt.imshow(cloud_lbl)
-    # plt.subplot(2, 2, 3)
-    # plt.imshow(ir)
-    # plt.subplot(2, 2, 4)
-    # plt.imshow(swir)
-    # # plt.subplot(2, 3, 5)
-    # # plt.imshow(clouds)
-    # # plt.subplot(2, 3, 6)
-    # # plt.imshow(temp)
-    # plt.show()
-    # plt.close('all')
+    # plotting for sanity check
+    blue = patches[0, 0, :, :].detach().numpy()
+    green = patches[0, 1, :, :].detach().numpy()
+    red = patches[0, 2, :, :].detach().numpy()
+    ir = patches[0, 3, :, :].detach().numpy()
+    swir = patches[0, 4, :, :].detach().numpy()
+    # clouds = patches[idx, 5, :, :].detach().numpy()
+    # temp = patches[idx, 6, :, :].detach().numpy()
+    img = np.array([red, blue, green])
+    img = np.moveaxis(img, 0, -1)
+    for i in range(3):
+        mx = np.max(img[:, :, i])
+        mn = np.min(img[:, :, i])
+        img[:, :, i] = (img[:, :, i] - mn) / (mx - mn)
+    cloud_img = patches[0, 0, :, :]
+    cloud_lbl = lbl_patches[0, 0, :, :]
+    plt.ion()
+    plt.subplot(2, 2, 1)
+    plt.imshow(img)
+    plt.subplot(2, 2, 2)
+    plt.imshow(cloud_lbl)
+    plt.subplot(2, 2, 3)
+    plt.imshow(ir)
+    plt.subplot(2, 2, 4)
+    plt.imshow(swir)
+    # plt.subplot(2, 3, 5)
+    # plt.imshow(clouds)
+    # plt.subplot(2, 3, 6)
+    # plt.imshow(temp)
+    plt.show()
+    plt.close('all')
 
     totalTensor = torch.cat((totalTensor, patches), 0)
     lbl_totalTensor = torch.cat((lbl_totalTensor, lbl_patches), 0)

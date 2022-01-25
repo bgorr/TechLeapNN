@@ -96,7 +96,7 @@ def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = Variable(data).float().to(DEVICE), Variable(target).float().to(DEVICE)
-        data = torch.FloatTensor(data)
+        data = torch.cuda.FloatTensor(data)
         optimizer.zero_grad()
         output = model(data)
         output2 = torch.sigmoid(output)
@@ -110,6 +110,8 @@ def train(epoch):
 
 
 def iou(p, t):
+    p = p.cpu()
+    t = t.cpu()
     current = confusion_matrix(t.numpy().flatten(), p.numpy().flatten(), labels=[0, 1])
     intersection = np.diag(current)
     ground_truth_set = current.sum(axis=1)  # rows
@@ -120,18 +122,24 @@ def iou(p, t):
 
 
 def pixel_acc(p, t):
+    p = p.cpu()
+    t = t.cpu()
     correct_pixels = (p == t).sum().to(dtype=torch.float)
     total_pixels = (t == t).sum().to(dtype=torch.float)
     return correct_pixels / total_pixels
 
 
 def calc_acc(p, t):
+    p = p.cpu()
+    t = t.cpu()
     correct_pixels = (p == t).sum().to(dtype=torch.float)
     total_pixels = (t == t).sum().to(dtype=torch.float)
     return correct_pixels / total_pixels
 
 
 def calc_iou(p, t):
+    p = p.cpu()
+    t = t.cpu()
     current = confusion_matrix(t.numpy().flatten(), p.numpy().flatten(), labels=[0, 1])
     intersection = np.diag(current)
     ground_truth_set = current.sum(axis=1)  # rows
@@ -150,6 +158,8 @@ def calc_iou(p, t):
 
 def calc_wiou(p, t):
     N = len(t)
+    p = p.cpu()
+    t = t.cpu()
     w_TP = np.zeros(N)
     w_TN = np.zeros(N)
     IoU = np.zeros(N)
@@ -197,7 +207,7 @@ def test(doSave, threshold):
     for data, target in test_loader:
         n_batches += 1
         data, target = \
-            Variable(data).float(), Variable(target).float()
+            Variable(data).float().to(DEVICE), Variable(target).float().to(DEVICE)
         out = model(data)
         output = torch.sigmoid(out)
         pred = (output[:, 1, :, :] > threshold).float() * 1
@@ -226,18 +236,18 @@ def test(doSave, threshold):
 
 
 torch.cuda.empty_cache()
-DEVICE = "cpu"
+DEVICE = "cuda"
 # network settings
-batch_size = 64
+batch_size = 1
 n_class = 2
-n_epochs = 50
+n_epochs = 100
 
 # set threshold
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-test_filename = "./output/test_dataset_ready_7bands.p"
-train_filename = "./output/train_dataset_ready_7bands.p"
+test_filename = "./output/landsat_dataset.p"
+train_filename = "./output/landsat_dataset.p"
 test_f = open(test_filename, "rb")
 train_f = open(train_filename, "rb")
 test_dataset_l = pickle.load(test_f)
@@ -245,21 +255,22 @@ train_dataset_l = pickle.load(train_f)
 test_f.close()
 train_f.close()
 
+train_set, val_set = torch.utils.data.random_split(train_dataset_l, [76, 15])
 # data loader
 random.seed(1319)
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset_l, batch_size=batch_size, shuffle=True)
-test_loader = torch.utils.data.DataLoader(dataset=test_dataset_l, batch_size=batch_size, shuffle=False)
+train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size, shuffle=False)
 
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-optimizer = optim.SGD(model.parameters(), lr=3e-4, momentum=0.99)
-weights = torch.tensor([1, 99], dtype=torch.float32)
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
+weights = torch.tensor([1, 9], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
-#loss_fn = nn.CrossEntropyLoss(weight=weights)
-#loss_fn = nn.BCELoss()
+#loss_fn = nn.CrossEntropyLoss(weight=weights).to(DEVICE)
+#loss_fn = nn.BCEWithLogitsLoss()
 loss_fn = DiceLoss()
 
 # run for NT Data Set
@@ -280,11 +291,11 @@ matplotlib.use('Agg')
 
 # plotting
 for i in range(len(results[0])):
-    X = test_dat[i]
-    Y = results[1][i]
-    Yest = results[2][i]
-    Yhat = results[3][i]
-    Z = results[0][i]
+    X = test_dat[i].cpu()
+    Y = results[1][i].cpu()
+    Yest = results[2][i].cpu()
+    Yhat = results[3][i].cpu()
+    Z = results[0][i].cpu()
     for j in range(len(X)):
         blue = X[j, 0, :, :].detach().numpy()
         green = X[j, 1, :, :].detach().numpy()
@@ -303,7 +314,6 @@ for i in range(len(results[0])):
         z = Z[j, :, :].detach().numpy()
         yhat = Yhat[j, :, :].detach().numpy()
         yest = Yest[j, :, :].detach().numpy()
-        # plt.ion()
         plt.subplot(2, 5, 1)
         plt.imshow(img)
         plt.subplot(2, 5, 2)
@@ -324,5 +334,5 @@ for i in range(len(results[0])):
         plt.imshow(yhat)
         plt.subplot(2, 5, 10)
         plt.imshow(yest)
-        plt.savefig('D:/Dropbox/Dropbox/TechLeap/allplots/fig{}{}.png'.format(i, j))
+        plt.savefig('./allplots/fig{}{}.png'.format(i, j))
         plt.close('all')
