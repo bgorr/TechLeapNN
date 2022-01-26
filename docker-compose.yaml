@@ -1,0 +1,9 @@
+services:
+  nn:
+    image: pytorch/pytorch
+    volumes:
+      - type: bind
+        source: /home/gapaza/repos/techleap/TechLeapNN
+        target: /app
+    tty: true
+    container_name: tech_leap_nn
