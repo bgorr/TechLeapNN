@@ -3,8 +3,10 @@
 /venv/*
 /output/
 .idea/*
+data/*
 config.py
 neuralnettest.py
 randomforest.py
 tfnn.py
 lr.py
+processing/__pycache__/*
