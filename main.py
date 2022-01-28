@@ -117,6 +117,7 @@ def processing():
 
 
 def neuralnet():
+    print('--> TESTING NEURAL NET')
 
     client = NeuralNetClient()
 
