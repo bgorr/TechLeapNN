@@ -86,7 +86,7 @@ class NeuralNetClient:
         # --> 1. Train desired number of epochs
         for epoch in range(epochs):
             self._train(epoch)
-            results = self.test(doSave=((epoch + 1) == n_epochs), threshold=thres)
+            results = self.test(doSave=((epoch + 1) == epochs), threshold=thres)
 
         # --> 2. Save final epoch results
         if results is not None:
@@ -94,6 +94,27 @@ class NeuralNetClient:
                 self.save(results)
             if plot is True:
                 self.plot(results)
+
+    def _train(self, epoch):
+        print('--> TRAIN EPOCH:', epoch)
+
+        # --> 1. Train the model
+        self.model.train()
+
+        # --> 2. Iterate over training data tensor
+        for batch_idx, (data, target) in enumerate(self.training_tensor):
+            data, target = Variable(data).float().to(self.device), Variable(target).float().to(self.device)
+            data = torch.cuda.FloatTensor(data)
+            self.optimizer.zero_grad()
+            output = self.model(data)
+            output2 = torch.sigmoid(output)
+            loss = self.loss_func(output2, target)
+            loss.backward()
+            self.optimizer.step()
+            if batch_idx % 10 == 0:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(data), len(self.training_tensor.dataset),
+                           100. * batch_idx / len(self.training_tensor), loss.item()))
 
 
 
@@ -151,30 +172,6 @@ class NeuralNetClient:
                 plt.imshow(yest)
                 plt.savefig('./allplots/fig{}{}.png'.format(i, j))
                 plt.close('all')
-
-
-
-    def _train(self, epoch):
-        print('--> TRAIN EPOCH:', epoch)
-
-        # --> 1. Train the model
-        self.model.train()
-
-        # --> 2. Iterate over training data tensor
-        for batch_idx, (data, target) in enumerate(self.training_tensor):
-            data, target = Variable(data).float().to(self.device), Variable(target).float().to(self.device)
-            data = torch.cuda.FloatTensor(data)
-            self.optimizer.zero_grad()
-            output = self.model(data)
-            output2 = torch.sigmoid(output)
-            loss = self.loss_func(output2, target)
-            loss.backward()
-            self.optimizer.step()
-            if batch_idx % 10 == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(self.training_tensor.dataset),
-                           100. * batch_idx / len(self.training_tensor), loss.item()))
-
 
 
     """
