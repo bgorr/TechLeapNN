@@ -86,7 +86,7 @@ class NeuralNetClient:
         # --> 1. Train desired number of epochs
         for epoch in range(epochs):
             self._train(epoch)
-            results = self.test(doSave=((epoch + 1) == epochs), threshold=self.threshold)
+            results = self.test(doSave=((epoch + 1) == epochs), threshold=self.threshold, epoch=epoch)
 
         # --> 2. Save final epoch results
         if results is not None:
@@ -183,7 +183,7 @@ class NeuralNetClient:
        |_| \___||___/ \__|
     """
 
-    def test(self, doSave, threshold):
+    def test(self, doSave, threshold, epoch):
         self.model.eval()
         n_batches = 0
         acc = []
