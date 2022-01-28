@@ -50,7 +50,7 @@ class NeuralNetClient:
         # --> Model
         self.cnn = VanillaCNN().to(self.device)
         self.model = Encoding(pretrained_net=self.cnn, n_class=self.num_classes).to(self.device)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=3e-4, momentum=0.99)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=3e-4, momentum=0.5)
         self.loss_func = LossFunction()
         self.weights = self.build_weights()
 
@@ -96,7 +96,6 @@ class NeuralNetClient:
                 self.plot(results)
 
     def _train(self, epoch):
-        print('--> TRAIN EPOCH:', epoch)
 
         # --> 1. Train the model
         self.model.train()

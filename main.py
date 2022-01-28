@@ -4,7 +4,6 @@ from neuralnet.api import NeuralNetClient
 
 import numpy as np
 import pprint
-import cv2
 from scipy import interpolate
 import torch
 
@@ -124,8 +123,6 @@ def neuralnet_test():
     client = NeuralNetClient()
 
     client.train(epochs=1, save=True, plot=False)
-
-
 
 
 
