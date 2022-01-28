@@ -18,7 +18,7 @@ from mpl_toolkits import axes_grid1
 import pickle
 import warnings
 
-from models.VanillaCNN import VanillaCNN, Encoding, LossFunction
+from neuralnet.models.VanillaCNN import VanillaCNN, Encoding, LossFunction
 
 
 

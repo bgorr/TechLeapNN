@@ -29,7 +29,7 @@ import warnings
 
 class VanillaCNN(nn.Module):
     def __init__(self):
-        super(NeuralNet, self).__init__()
+        super(VanillaCNN, self).__init__()
 
         self.conv1 = nn.Conv2d(7, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
@@ -73,7 +73,7 @@ class LossFunction(nn.Module):
 class Encoding(nn.Module):
 
     def __init__(self, pretrained_net, n_class):
-        super(FCN8s, self).__init__()
+        super(Encoding, self).__init__()
         self.n_class = n_class
         self.pretrained_net = pretrained_net
         self.relu = nn.ReLU(inplace=True)
