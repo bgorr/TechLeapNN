@@ -264,7 +264,7 @@ class NeuralNetClient:
             pred, tar = p[j], t[j]
             w_TP[j] = sum(sum(tar))
             w_TN[j] = sum(sum(1 - tar))
-            IoU_TP[j], IoU_TN[j], IoU[j] = calc_iou(p=pred, t=tar)
+            IoU_TP[j], IoU_TN[j], IoU[j] = self.calc_iou(p=pred, t=tar)
         wIoU_TP = sum(w_TP * IoU_TP) / sum(w_TP)
         if math.isnan(wIoU_TP):
             wIoU_TP = 0
