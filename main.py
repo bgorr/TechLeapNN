@@ -1,5 +1,7 @@
 from processing.api import DataProcessingClient
 from neuralnet.api import NeuralNetClient
+
+
 import numpy as np
 import pprint
 import cv2
@@ -116,7 +118,7 @@ def processing():
     processing_client.run()
 
 
-def neuralnet():
+def neuralnet_test():
     print('--> TESTING NEURAL NET')
 
     client = NeuralNetClient()
@@ -129,29 +131,9 @@ def neuralnet():
 
 
 
-def main():
-    neuralnet()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
 
 if __name__ == "__main__":
-    # interpolate_test()
-    # unfold_test()
-    # reshape_test()
-    main()
+    neuralnet_test()

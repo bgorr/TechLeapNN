@@ -30,7 +30,7 @@ class NeuralNetClient:
 
     def __init__(self):
 
-        self.device = 'gpu'
+        self.device = 'cuda'
 
         self.batch_size = 1
         self.num_classes = 2
