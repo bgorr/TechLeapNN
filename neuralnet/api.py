@@ -169,7 +169,7 @@ class NeuralNetClient:
             output2 = torch.sigmoid(output)
             loss = self.loss_func(output2, target)
             loss.backward()
-            optimizer.step()
+            self.optimizer.step()
             if batch_idx % 10 == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(self.training_tensor.dataset),
