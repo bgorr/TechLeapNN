@@ -123,7 +123,7 @@ def neuralnet_test():
 
     client = NeuralNetClient()
 
-    client.train(epochs=3, save=True, plot=False)
+    client.train(epochs=1, save=True, plot=False)
 
 
 
