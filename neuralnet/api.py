@@ -86,7 +86,7 @@ class NeuralNetClient:
         # --> 1. Train desired number of epochs
         for epoch in range(epochs):
             self._train(epoch)
-            results = self.test(doSave=((epoch + 1) == epochs), threshold=thres)
+            results = self.test(doSave=((epoch + 1) == epochs), threshold=self.threshold)
 
         # --> 2. Save final epoch results
         if results is not None:
