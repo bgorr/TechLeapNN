@@ -1,5 +1,6 @@
 services:
   nn:
+#    image: rocm/pytorch:rocm4.5.2_ubuntu18.04_py3.8_pytorch_1.10.0
     image: pytorch/pytorch
     volumes:
       - type: bind

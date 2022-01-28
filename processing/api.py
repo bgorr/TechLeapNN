@@ -55,6 +55,7 @@ class DataProcessingClient:
 
 
 
+
     def process_pair(self, pair):
         image_ds = netCDF4.Dataset(pair[0])  # 3248 x 3200 | 3232 x 3200
         label_ds = netCDF4.Dataset(pair[1])  # 406  x 400  | 404  x 400
@@ -65,7 +66,6 @@ class DataProcessingClient:
 
         print('--> PATCHING')
         return self.process_patches(image_tensor, label_tensor)
-
 
     def process_image(self, image_ds):
 
@@ -150,24 +150,18 @@ class DataProcessingClient:
         #         i = i + 1
 
         # --> New code
-        idx_remove = []
-        idx_add = []
-        for i in range(image_patches.size(0)):
-            if image_patches[i, :, :, :].isnan().any() or not torch.isin(1, label_patches[i, :, :, :]).any():
-                idx_remove.append(i)
-            else:
-                idx_add.append(i)
-
         image_tensor_slices = []
         label_tensor_slices = []
-        for idx in idx_add:
-            image_tensor_slices.append(image_patches[idx:idx+1, :, :, :])
-            label_tensor_slices.append(label_patches[idx:idx+1, :, :, :])
+        for i in range(image_patches.size(0)):
+            if not (image_patches[i, :, :, :].isnan().any() or not torch.isin(1, label_patches[i, :, :, :]).any()):
+                image_tensor_slices.append(image_patches[i:i + 1, :, :, :])
+                label_tensor_slices.append(label_patches[i:i + 1, :, :, :])
+
+        if len(image_tensor_slices) == 0 or len(label_tensor_slices) == 0:
+            return None, None
 
         image_patches = torch.cat(image_tensor_slices)
         label_patches = torch.cat(label_tensor_slices)
-
-
 
 
         # --> 4. Normalize image patches
@@ -193,11 +187,16 @@ class DataProcessingClient:
 
         for idx, pair in enumerate(self.pairs):
             print('\n\n', idx, '--------------------------------------')
+            print('--> IMAGE FILE:', pair[0])
+            print('--> LABEL FILE:', pair[1])
 
             image_patches, label_patches = self.process_pair(pair)
 
-            all_image_patches.append(image_patches)
-            all_label_patches.append(label_patches)
+            if image_patches is not None and label_patches is not None:
+                all_image_patches.append(image_patches)
+                all_label_patches.append(label_patches)
+            else:
+                print('--> SKIPPING PAIR, NO USABLE PATCHES')
 
         self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
         self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
