@@ -43,11 +43,13 @@ class NeuralNetClient:
 
 
 
+    def build(self):
+        return 0
 
 
 
-        self.test = 0
-
+    def run(self):
+        return 0
 
 
 

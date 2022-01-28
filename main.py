@@ -1,4 +1,5 @@
 from processing.api import DataProcessingClient
+from neuralnet.api import NeuralNetClient
 import numpy as np
 import pprint
 import cv2
@@ -115,11 +116,20 @@ def processing():
     processing_client.run()
 
 
+def neuralnet():
+
+    client = NeuralNetClient()
+
+    client.build()
+
+    client.run()
+
+
 
 
 
 def main():
-    processing()
+    neuralnet()
 
 
 
