@@ -108,14 +108,14 @@ def processing():
 
     # --> 1. Process training data
     data_dir = '/home/ec2-user/repos/TechLeapNN/data/viirs/training_dataset'
-    save_path = '/home/ec2-user/repos/TechLeapNN/output/datasets/training_dataset.p'
+    save_path = '/home/ec2-user/repos/TechLeapNN/output/training_dataset.p'
     processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
     processing_client.build()
     processing_client.run()
 
     # --> 2. Process test data
     data_dir = '/home/ec2-user/repos/TechLeapNN/data/viirs/test_dataset'
-    save_path = '/home/ec2-user/repos/TechLeapNN/output/datasets/test_dataset.p'
+    save_path = '/home/ec2-user/repos/TechLeapNN/output/test_dataset.p'
     processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
     processing_client.build()
     processing_client.run()
