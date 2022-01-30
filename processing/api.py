@@ -69,7 +69,7 @@ class DataProcessingClient:
 
 
 
-    def build(self):
+    def build_fast(self):
 
         # --> 1. Process each file pair in a new process to maximize cpu usage
         jobs = []
@@ -102,6 +102,28 @@ class DataProcessingClient:
         # --> 3. Put all in tensor
         self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
         self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
+
+
+    def build(self):
+
+        all_image_patches = [self.total_image_tensor]
+        all_label_patches = [self.total_label_tensor]
+
+        for idx, pair in enumerate(self.pairs):
+            print('--> Processing Pair:', idx, '--------------------------------------')
+
+            image_patches, label_patches = self.process_pair(pair)
+
+            if image_patches is not None and label_patches is not None:
+                all_image_patches.append(image_patches)
+                all_label_patches.append(label_patches)
+            else:
+                print('--> SKIPPING PAIR, NO USABLE PATCHES')
+
+        # --> 3. Put all in tensor
+        self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
+        self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
+
 
     def _build(self, conn, pair):
 
