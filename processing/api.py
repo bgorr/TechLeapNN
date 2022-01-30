@@ -91,7 +91,7 @@ class DataProcessingClient:
         all_label_patches = [self.total_label_tensor]
         for idx, proc in enumerate(jobs):
             print('--> Getting data from proc', idx)
-            pair = connections[idx].get()
+            pair = connections[idx].recv()
             all_image_patches.append(pair[0])
             all_label_patches.append(pair[1])
             proc.join()
