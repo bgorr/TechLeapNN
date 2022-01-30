@@ -75,6 +75,9 @@ class DataProcessingClient:
         jobs = []
         queues = []
         for idx, pair in enumerate(self.pairs):
+            if idx > 2:
+                break
+
             print('--> Processing Pair:', idx, '--------------------------------------')
             queue = SimpleQueue()
             queues.append(queue)
