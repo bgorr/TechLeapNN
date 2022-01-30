@@ -231,6 +231,15 @@ class NeuralNetClient:
         dd = self.listMean(wiou_tp, 2)
         ee = self.listMean(iou_tn, 1)
         ff = self.listMean(wiou_tn, 2)
+
+        print('\n-----> Testing model:', epoch, 'epochs')
+        print('--> Accuracy:', str(round(100 * aa, 2)) + '%')
+        print('--> IoU:', str(round(100 * bb, 2)) + '%')
+        print('--> True Positive:', str(round(100 * dd, 2)) + '%')
+        print('--> True Negative:', str(round(100 * ff, 2)) + '%')
+
+
+
         print('\nTest Epoch: {}\t Accuracy: {}%, IoU: {}%, TP IoU: {}({})%, TN IoU = {}({})%\n'.format(
             epoch, round(100 * aa, 2), round(100 * bb, 2), round(100 * cc, 2), round(100 * dd, 2),
             round(100 * ee, 2), round(100 * ff, 2)))
