@@ -17,7 +17,6 @@ def duplicates():
 
 
 
-
     test_image_files = [f for f in os.listdir('/app/data/viirs/test_dataset/images')]
     print(len(test_image_files), len(list(dict.fromkeys(test_image_files))))
 

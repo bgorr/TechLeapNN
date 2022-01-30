@@ -105,15 +105,19 @@ def reshape_test():
 
 
 def processing():
-    data_dir = '/app/data/viirs/test_dataset'
-    save_path = '/app/output/test_dataset_ready_7bands.p'
 
+    # --> 1. Process training data
+    data_dir = '/app/data/viirs/training_dataset'
+    save_path = '/app/output/datasets/training_dataset.p'
     processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
-
-    # --> 1. Build
     processing_client.build()
+    processing_client.run()
 
-    # --> 2. Run
+    # --> 2. Process test data
+    data_dir = '/app/data/viirs/test_dataset'
+    save_path = '/app/output/datasets/test_dataset.p'
+    processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
+    processing_client.build()
     processing_client.run()
 
 
@@ -123,6 +127,10 @@ def neuralnet_test():
     client = NeuralNetClient()
 
     client.train(epochs=20, save=True, plot=False)
+
+
+
+
 
 
 
