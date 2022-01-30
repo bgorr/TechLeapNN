@@ -73,29 +73,27 @@ class DataProcessingClient:
 
         # --> 1. Process each file pair in a new process to maximize cpu usage
         jobs = []
-        queues = []
+        result_queue = SimpleQueue()
         for idx, pair in enumerate(self.pairs):
             if idx > 2:
                 break
 
             print('--> Processing Pair:', idx, '--------------------------------------')
-            queue = SimpleQueue()
-            proc = Process(target=self._build, args=(queue, pair))
+            proc = Process(target=self._build, args=(result_queue, pair))
             proc.start()
-
-            queues.append(queue)
             jobs.append(proc)
 
-
-
-        all_image_patches = [self.total_image_tensor]
-        all_label_patches = [self.total_label_tensor]
+        # --> 2. Join all processes
         for idx, proc in enumerate(jobs):
             proc.join()
-            pair = queues[idx].get()
-            if pair is not None:
-                all_image_patches.append(pair[0])
-                all_label_patches.append(pair[1])
+
+        # --> 3. Get all patches from processes
+        all_image_patches = [self.total_image_tensor]
+        all_label_patches = [self.total_label_tensor]
+        while not result_queue.empty():
+            pair = result_queue.get()
+            all_image_patches.append(pair[0])
+            all_label_patches.append(pair[1])
 
         print(len(all_image_patches))
         print(len(all_label_patches))
