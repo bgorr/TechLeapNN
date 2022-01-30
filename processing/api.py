@@ -67,15 +67,52 @@ class DataProcessingClient:
 
 
 
+
+
+    def build(self):
+
+        # --> 1. Process each file pair in a new process to maximize cpu usage
+        jobs = []
+        all_paired_patches = []
+        for idx, pair in enumerate(self.pairs):
+            print('\n\n', idx, '--------------------------------------')
+            proc = Process(target=self._build, args=(all_paired_patches, pair))
+            jobs.append(proc)
+            proc.start()
+
+        # --> 2. Unpack shared process variable to get all image patches and label patches
+        all_image_patches = [self.total_image_tensor]
+        all_label_patches = [self.total_label_tensor]
+        for pair in all_paired_patches:
+            all_image_patches.append(pair[0])
+            all_label_patches.append(pair[1])
+
+        # --> 3. Put all in tensor
+        self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
+        self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
+
+    def _build(self, all_paired_patches, pair):
+
+        # --> 1. Process pair and get patches
+        image_patches, label_patches = self.process_pair(pair)
+
+        # --> 2. Append patch pair to shared variable
+        if image_patches is not None and label_patches is not None:
+            result_tuple = (image_patches, label_patches)
+            all_paired_patches.append(result_tuple)
+        else:
+            print('--> SKIPPING PAIR, NO USABLE PATCHES')
+
+
+
+
     def process_pair(self, pair):
         image_ds = netCDF4.Dataset(pair[0])  # 3248 x 3200 | 3232 x 3200
         label_ds = netCDF4.Dataset(pair[1])  # 406  x 400  | 404  x 400
 
-        print('--> PROCESSING IMAGES / LABELS')
         image_tensor = self.process_image(image_ds)
         label_tensor = self.process_label(label_ds)
 
-        print('--> PATCHING')
         return self.process_patches(image_tensor, label_tensor)
 
     def process_image(self, image_ds):
@@ -137,18 +174,15 @@ class DataProcessingClient:
         # label_tensor: 3200 x 3200
 
         # --> 1. Get image patches
-        print('--> get image patches')
         image_patches = image_tensor.unfold(1, 161, 161).unfold(2, 105, 105)
         image_patches = image_patches.contiguous().view(5, 570, 161, 105)
         image_patches = image_patches.permute(1, 0, 2, 3)
 
         # --> 2. Get label patches
-        print('--> get label patches')
         label_patches = label_tensor.unfold(0, 161, 161).unfold(1, 105, 105)
         label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
 
         # --> 3. Clean patches of NAN values
-        print('--> clean patches', image_patches.size(0))
 
         # --> Old code
         # i = 0
@@ -176,7 +210,6 @@ class DataProcessingClient:
 
 
         # --> 4. Normalize image patches
-        print('--> normalize patches')
         for i in range(image_patches.size(1)):
             AA = image_patches[:, i, :, :].clone()
             AA = AA.view(image_patches.size(0), -1)
@@ -191,43 +224,6 @@ class DataProcessingClient:
 
 
 
-    def build(self):
-
-        # --> 1. Process each file pair in a new process to maximize cpu usage
-        jobs = []
-        all_paired_patches = []
-        for idx, pair in enumerate(self.pairs):
-            print('\n\n', idx, '--------------------------------------')
-            print('--> IMAGE FILE:', pair[0])
-            print('--> LABEL FILE:', pair[1])
-            proc = Process(target=self._build, args=(all_paired_patches, pair))
-            jobs.append(proc)
-            proc.start()
-
-        # --> 2. Unpack shared process variable to get all image patches and label patches
-        all_image_patches = [self.total_image_tensor]
-        all_label_patches = [self.total_label_tensor]
-        for pair in all_paired_patches:
-            all_image_patches.append(pair[0])
-            all_label_patches.append(pair[1])
-
-        # --> 3. Put all in tensor
-        self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
-        self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
-
-
-
-    def _build(self, all_paired_patches, pair):
-
-        # --> 1. Process pair and get patches
-        image_patches, label_patches = self.process_pair(pair)
-
-        # --> 2. Append patch pair to shared variable
-        if image_patches is not None and label_patches is not None:
-            result_tuple = (image_patches, label_patches)
-            all_paired_patches.append(result_tuple)
-        else:
-            print('--> SKIPPING PAIR, NO USABLE PATCHES')
 
 
 
