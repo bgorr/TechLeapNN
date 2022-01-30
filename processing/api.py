@@ -75,7 +75,7 @@ class DataProcessingClient:
         jobs = []
         all_paired_patches = []
         for idx, pair in enumerate(self.pairs):
-            print('\n\n', idx, '--------------------------------------')
+            print('--> Processing Pair:', idx, '--------------------------------------')
             proc = Process(target=self._build, args=(all_paired_patches, pair))
             jobs.append(proc)
             proc.start()

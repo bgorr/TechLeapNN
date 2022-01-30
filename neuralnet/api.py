@@ -41,8 +41,8 @@ class NeuralNetClient:
         # --> Data
         self.result_file = './output/results.p'
 
-        self.training_dataset = pickle.load(open('./output/training_dataset_ready_7bands.p', 'rb'))
-        self.test_dataset = pickle.load(open('./output/test_dataset_ready_7bands.p', 'rb'))
+        self.training_dataset = pickle.load(open('./output/training_dataset.p', 'rb'))
+        self.test_dataset = pickle.load(open('./output/test_dataset.p', 'rb'))
 
         self.training_tensor = torch.utils.data.DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_tensor = torch.utils.data.DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=True)
