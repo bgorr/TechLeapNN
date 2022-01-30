@@ -137,7 +137,7 @@ def neuralnet_test():
 
 
 if __name__ == "__main__":
-    neuralnet_test()
+    processing()
 
 
 
