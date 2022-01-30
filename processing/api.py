@@ -7,7 +7,7 @@ import pprint
 import pickle
 from torchvision import transforms
 from torch.autograd import Variable
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 
 def _proc():
@@ -73,29 +73,32 @@ class DataProcessingClient:
 
         # --> 1. Process each file pair in a new process to maximize cpu usage
         jobs = []
-        all_paired_patches = []
+        queues = []
         for idx, pair in enumerate(self.pairs):
             print('--> Processing Pair:', idx, '--------------------------------------')
-            proc = Process(target=self._build, args=(all_paired_patches, pair))
+            queue = Queue()
+            queues.append(queue)
+            proc = Process(target=self._build, args=(queue, pair))
             jobs.append(proc)
             proc.start()
 
-        for proc in jobs:
-            proc.join()
-            print('--> ALL FILES FINISHED:', len(all_paired_patches))
 
-        # --> 2. Unpack shared process variable to get all image patches and label patches
         all_image_patches = [self.total_image_tensor]
         all_label_patches = [self.total_label_tensor]
-        for pair in all_paired_patches:
-            all_image_patches.append(pair[0])
-            all_label_patches.append(pair[1])
+        for idx, proc in enumerate(jobs):
+            proc.join()
+            pair = queues[idx].get()
+            if pair is not None:
+                all_image_patches.append(pair[0])
+                all_label_patches.append(pair[1])
+        print(len(all_image_patches))
+        print(len(all_label_patches))
 
         # --> 3. Put all in tensor
         self.total_image_tensor = torch.cat(tuple(all_image_patches), 0)
         self.total_label_tensor = torch.cat(tuple(all_label_patches), 0)
 
-    def _build(self, all_paired_patches, pair):
+    def _build(self, queue, pair):
 
         # --> 1. Process pair and get patches
         image_patches, label_patches = self.process_pair(pair)
@@ -103,7 +106,7 @@ class DataProcessingClient:
         # --> 2. Append patch pair to shared variable
         if image_patches is not None and label_patches is not None:
             result_tuple = (image_patches, label_patches)
-            all_paired_patches.append(result_tuple)
+            queue.put(result_tuple)
         else:
             print('--> SKIPPING PAIR, NO USABLE PATCHES')
 
