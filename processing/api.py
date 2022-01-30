@@ -7,7 +7,7 @@ import pprint
 import pickle
 from torchvision import transforms
 from torch.autograd import Variable
-from multiprocessing import Process, Queue
+from multiprocessing import Process, SimpleQueue
 
 
 def _proc():
@@ -76,7 +76,7 @@ class DataProcessingClient:
         queues = []
         for idx, pair in enumerate(self.pairs):
             print('--> Processing Pair:', idx, '--------------------------------------')
-            queue = Queue()
+            queue = SimpleQueue()
             queues.append(queue)
             proc = Process(target=self._build, args=(queue, pair))
             jobs.append(proc)
@@ -86,11 +86,11 @@ class DataProcessingClient:
         all_image_patches = [self.total_image_tensor]
         all_label_patches = [self.total_label_tensor]
         for idx, proc in enumerate(jobs):
-            proc.join()
             pair = queues[idx].get()
             if pair is not None:
                 all_image_patches.append(pair[0])
                 all_label_patches.append(pair[1])
+            proc.join()
         print(len(all_image_patches))
         print(len(all_label_patches))
 
@@ -108,7 +108,7 @@ class DataProcessingClient:
             result_tuple = (image_patches, label_patches)
             queue.put(result_tuple)
         else:
-            print('--> SKIPPING PAIR, NO USABLE PATCHES')
+            queue.put(None)
 
 
 
