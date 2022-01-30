@@ -17,7 +17,7 @@ def train():
 
     client = NeuralNetClient()
 
-    client.train(epochs=5, save=True, plot=False)
+    client.train(save=True, plot=False)
 
 
 if __name__ == "__main__":

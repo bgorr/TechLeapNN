@@ -36,7 +36,7 @@ class NeuralNetClient:
         self.device = 'cuda'
         self.batch_size = 64
         self.num_classes = 2
-        self.threshold = torch.Tensor([.555]).to(self.device)
+        self.threshold = torch.Tensor([.666]).to(self.device)
 
         # --> Data
         self.result_file = './output/results.p'
@@ -83,7 +83,7 @@ class NeuralNetClient:
        |_||_|   \__,_||_||_| |_|                      
     """
 
-    def train(self, epochs=10, save=True, plot=True):
+    def train(self, epochs=50, save=True, plot=True):
         results = None
 
         # --> 1. Train desired number of epochs
@@ -91,6 +91,7 @@ class NeuralNetClient:
             self._train(epoch)
 
         # --> 2. Get results of trained model
+        print('\n--> TESTING MODEL')
         results = self.test(doSave=True, threshold=self.threshold, epoch=epochs-1)
 
         # --> 3. Save final epoch results
