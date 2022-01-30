@@ -1,5 +1,6 @@
 /allplots_cloudmask/*
 /allplots/
+examples/*
 /venv/*
 /output/
 .idea/*

@@ -34,8 +34,16 @@ class DataProcessingClient:
         self.pairs = self.get_file_pairs()
 
         # --> Pytorch Tensors <--
+        """
+        Tensor Image: (B, C, H, W) shape, where:
+            - B is a number of images in the batch.
+            - C is the channel
+            - H is the height
+            - W is the width
+        """
         self.total_image_tensor = torch.Tensor()
         self.total_label_tensor = torch.Tensor()
+
 
 
     def get_file_pairs(self):
@@ -217,6 +225,15 @@ class DataProcessingClient:
         # --> 2. Pickle dataset and save to file
         dataset = []
         for i in range(self.total_image_tensor.size(0)):
+
+            """
+            Tensor Image: (B, C, H, W) shape, where:
+                - B is a number of images in the batch.
+                - C is the channel
+                - H is the height
+                - W is the width
+            """
+
             image_data = self.total_image_tensor[i, :, :, :].clone()
             label_data = self.total_label_tensor[i, :, :, :].clone()
 

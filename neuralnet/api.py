@@ -50,8 +50,11 @@ class NeuralNetClient:
         # --> Model
         self.cnn = VanillaCNN().to(self.device)
         self.model = Encoding(pretrained_net=self.cnn, n_class=self.num_classes).to(self.device)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=3e-4, momentum=0.5)
         self.loss_func = LossFunction()
+
+        # --> Stochastic gradient descent
+        self.optimizer = optim.SGD(self.model.parameters(), lr=3e-4, momentum=0.5)
+
         self.weights = self.build_weights()
 
 
@@ -87,7 +90,7 @@ class NeuralNetClient:
         for epoch in range(epochs):
             self._train(epoch)
             if epoch == (epochs-1):
-                results = self.test(doSave=((epoch + 1) == epochs), threshold=self.threshold, epoch=epoch)
+                results = self.test(doSave=True, threshold=self.threshold, epoch=epoch)
 
         # --> 2. Save final epoch results
         if results is not None:
@@ -105,9 +108,13 @@ class NeuralNetClient:
         for batch_idx, (data, target) in enumerate(self.training_tensor):
             data, target = Variable(data).float().to(self.device), Variable(target).float().to(self.device)
             data = torch.cuda.FloatTensor(data)
+
+
             self.optimizer.zero_grad()
+
             output = self.model(data)
             output2 = torch.sigmoid(output)
+
             loss = self.loss_func(output2, target)
             loss.backward()
             self.optimizer.step()
@@ -198,8 +205,10 @@ class NeuralNetClient:
         all_pred = []
         for data, target in self.test_tensor:
             n_batches += 1
-            data, target = \
-                Variable(data).float().to(self.device), Variable(target).float().to(self.device)
+
+            data = Variable(data).float().to(self.device)
+            target = Variable(target).float().to(self.device)
+
             out = self.model(data)
             output = torch.sigmoid(out)
             pred = (output[:, 1, :, :] > threshold).float() * 1

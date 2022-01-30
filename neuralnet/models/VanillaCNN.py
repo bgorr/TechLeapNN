@@ -34,19 +34,66 @@ class VanillaCNN(nn.Module):
         self.conv1 = nn.Conv2d(5, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+
+        # The purpose of pooling layers is to mitigate the sensitivity of convolutional layers to location and of spatially down-sampling representations
+        # MaxPool2d - Max pooling calculates the maximum value of the elements in the pooling window
         self.mp = nn.MaxPool2d(2)
+
+
+
         self.fc = nn.Linear(33280, 2)
 
     def forward(self, x):
+        # Activation Functions
+        #   - Rectified Linear Unit: ReLU(x) = max(x,0)
+        #       Properties
+        #       - only retains positive elements
+        #       - piecewise linear
+        #       - bounds: [0, inf)
+        #       - if input positive, derivative equals 1
+        #       - if input negative, derivative equals 0
+        #   - Sigmoid Function: 1 / (1 + exp(-x))
+        #       Properties
+        #       - bounds: (0, 1)
+
         in_size = x.size(0)
+
+
+
+        # --> Pass inputs through first convolutional layer then apply activation function ReLU
         x1 = F.relu(self.conv1(x))
+
+        # --> Pass output of convolutional layer x1 as the input for 2 x 2 maximum pooling
         x1 = self.mp(x1)  # size=(N, 32, x.H/2, x.W/2)
+
+
+
+        # --> Pass inputs through second convolutional layer then apply activation function ReLU
         x2 = F.relu(self.conv2(x1))
+
+        # --> Pass output of convolutional layer x2 as the input for 2 x 2 maximum pooling
         x2 = self.mp(x2)  # size=(N, 64, x.H/4, x.H/4)
+
+
+
+
+
+        # --> Pass inputs through third convolutional layer then apply activation function ReLU
         x3 = F.relu(self.conv3(x2))
+
+        # --> Pass output of convolutional layer x3 as the input for 2 x 2 maximum pooling
         x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
+
+
+
+
+        # --> Transform output and pass through final linear nn layer
         x4 = x3.view(in_size, -1)
         x4 = self.fc(x4)  # size=(N, n_class)
+
+
+
+
         y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
         return x1, x2, x3, x4, y
 
@@ -74,8 +121,12 @@ class Encoding(nn.Module):
 
     def __init__(self, pretrained_net, n_class):
         super(Encoding, self).__init__()
+
+
         self.n_class = n_class
         self.pretrained_net = pretrained_net
+
+
         self.relu = nn.ReLU(inplace=True)
         self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn1 = nn.BatchNorm2d(64)

@@ -1,6 +1,9 @@
 import os
-
-
+import torch
+import torchvision
+from torch.utils import data
+from torchvision import transforms
+from d2l import torch as d2l
 
 
 def duplicates():
@@ -33,7 +36,6 @@ def duplicates():
         if test_file in train_label_files:
             counter += 1
     print('--> LABEL DUPLICATES:', counter)
-
 
 
 if __name__ == "__main__":
