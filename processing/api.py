@@ -80,6 +80,9 @@ class DataProcessingClient:
             jobs.append(proc)
             proc.start()
 
+        for proc in jobs:
+            proc.join()
+
         # --> 2. Unpack shared process variable to get all image patches and label patches
         all_image_patches = [self.total_image_tensor]
         all_label_patches = [self.total_label_tensor]
