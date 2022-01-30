@@ -80,20 +80,23 @@ class DataProcessingClient:
 
             print('--> Processing Pair:', idx, '--------------------------------------')
             queue = SimpleQueue()
-            queues.append(queue)
             proc = Process(target=self._build, args=(queue, pair))
-            jobs.append(proc)
             proc.start()
+
+            queues.append(queue)
+            jobs.append(proc)
+
 
 
         all_image_patches = [self.total_image_tensor]
         all_label_patches = [self.total_label_tensor]
         for idx, proc in enumerate(jobs):
+            proc.join()
             pair = queues[idx].get()
             if pair is not None:
                 all_image_patches.append(pair[0])
                 all_label_patches.append(pair[1])
-            proc.join()
+
         print(len(all_image_patches))
         print(len(all_label_patches))
 
