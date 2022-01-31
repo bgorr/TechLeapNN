@@ -318,7 +318,7 @@ class DataProcessingClient:
         print(image_patches.size())
 
         # [7, 10000, 32, 32]
-        image_patches = image_patches.contiguous().view(7, slices, self.psize, self.psize)
+        image_patches = image_patches.contiguous().view(7, int(slices), self.psize, self.psize)
         print(image_patches.size())
 
         # [10000, 7, 32, 32]
@@ -331,9 +331,6 @@ class DataProcessingClient:
         print('--> LABEL PATCHING')
         print(label_tensor.size())
         # label_tensor: 3200 x 3200
-
-        slices = 3200 / self.psize
-        slices *= slices
 
 
         # [50, 3200, 64]
