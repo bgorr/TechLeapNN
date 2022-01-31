@@ -75,7 +75,7 @@ class VanillaCNN(nn.Module):
 
 
 
-    def forward(self, x, debug=False):
+    def forward(self, x, debug=True):
 
         # Activation Functions
         #   - Rectified Linear Unit: ReLU(x) = max(x,0)
@@ -199,10 +199,10 @@ class Encoding(nn.Module):
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
     def forward(self, x):
-        # print('--> ENCODING FORWARD PROPAGATION:', x.size())
+        print('--> ENCODING FORWARD PROPAGATION:', x.size())
         output = self.pretrained_net(x)
 
-        # print('--> DECODING FORWARD PROPAGATION:', x.size())
+        print('--> DECODING FORWARD PROPAGATION:', x.size())
         x3 = output[2]
         x2 = output[1]
         x1 = output[0]
@@ -210,17 +210,17 @@ class Encoding(nn.Module):
 
         # --> 1. Deconvolve
         score = self.relu(self.deconv1(x3))
-        # print(1, score.size())
+        print(1, score.size())
 
         # --> 2. Deconvolve
         score = self.bn1(score + x2)
         score = self.relu(self.deconv2(score))
-        # print(2, score.size())
+        print(2, score.size())
 
         # --> 3. Deconvolve
         score = self.bn2(score + x1)
         score = self.bn3(self.relu(self.deconv3(score)))
-        # print(3, score.size())
+        print(3, score.size())
 
         # --> 4. Classify score
         score = self.classifier(score)
