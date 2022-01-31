@@ -345,6 +345,8 @@ class DataProcessingClient:
         label_patches = label_patches.contiguous().view(-1, 1, self.psize, self.psize)
         print(label_patches.size())
 
+        return label_patches
+
 
 
 
