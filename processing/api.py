@@ -293,8 +293,8 @@ class DataProcessingClient:
         label_patches = label_patches.unfold(1, 64, 64)
         print(label_patches.size())
 
-        # [570, 1, 161, 105]
-        label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
+        # [2500, 1, 64, 64]
+        label_patches = label_patches.contiguous().view(-1, 1, 64, 64)
         print(label_patches.size())
 
         return label_patches
