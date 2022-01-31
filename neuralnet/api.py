@@ -28,7 +28,7 @@ from neuralnet.models.VanillaCNN import VanillaCNN, Encoding, LossFunction
 
 class NeuralNetClient:
 
-    def __init__(self):
+    def __init__(self, training_dataset, test_dataset, result_file):
         random.seed(1319)
         matplotlib.use('Agg')
 
@@ -39,10 +39,10 @@ class NeuralNetClient:
         self.threshold = torch.Tensor([.666]).to(self.device)
 
         # --> Data
-        self.result_file = './output/results.p'
+        self.result_file = result_file
 
-        self.training_dataset = pickle.load(open('./output/training_dataset_7b.p', 'rb'))
-        self.test_dataset = pickle.load(open('./output/test_dataset_7b.p', 'rb'))
+        self.training_dataset = pickle.load(open(training_dataset, 'rb'))
+        self.test_dataset = pickle.load(open(test_dataset, 'rb'))
 
         self.training_tensor = torch.utils.data.DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_tensor = torch.utils.data.DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=True)

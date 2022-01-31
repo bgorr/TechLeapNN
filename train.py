@@ -15,7 +15,12 @@ def train():
 
     print('--> TESTING NEURAL NET')
 
-    client = NeuralNetClient()
+    training_dataset = './output/training_dataset_7b_64.p'
+    test_dataset = './output/test_dataset_7b_64.p'
+    result_file = './output/results.p'
+
+
+    client = NeuralNetClient(training_dataset, test_dataset, result_file)
 
     client.train(save=True, plot=False)
 
