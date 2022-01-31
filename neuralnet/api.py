@@ -83,7 +83,7 @@ class NeuralNetClient:
        |_||_|   \__,_||_||_| |_|                      
     """
 
-    def train(self, epochs=2, save=True, plot=True):
+    def train(self, epochs=10, save=True, plot=True):
         results = None
 
         # --> 1. Train desired number of epochs
