@@ -343,7 +343,8 @@ class DataProcessingClient:
             AA = AA.view(image_patches.size(0), -1)
             AA -= AA.mean(1, keepdim=True)[0]
             AA /= AA.std(1, keepdim=True)[0]
-            AA = AA.view(image_patches.size(0), 161, 105)
+            # AA = AA.view(image_patches.size(0), 161, 105)
+            AA = AA.view(image_patches.size(0), 64, 64)
             image_patches[:, i, :, :] = AA
 
         return image_patches, label_patches
