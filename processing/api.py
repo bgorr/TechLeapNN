@@ -208,11 +208,25 @@ class DataProcessingClient:
 
         # image_tensor: 5 x 3200 x 3200
         # label_tensor: 3200 x 3200
+        print('--> IMAGE PATCHING')
 
         # --> 1. Get image patches
-        image_patches = image_tensor.unfold(1, 161, 161).unfold(2, 105, 105)
+        image_patches = image_tensor.unfold(1, 161, 161)
+        print(image_patches.size())
+
+        image_patches = image_patches.unfold(2, 105, 105)
+        print(image_patches.size())
+
+        # 7 x 570 x 161 x 105
         image_patches = image_patches.contiguous().view(7, 570, 161, 105)
+        print(image_patches.size())
+
+        # 570 x 7 x 161 x 105
         image_patches = image_patches.permute(1, 0, 2, 3)
+        print(image_patches.size())
+
+
+
 
         # --> 2. Get label patches
         label_patches = label_tensor.unfold(0, 161, 161).unfold(1, 105, 105)

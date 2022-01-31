@@ -80,9 +80,10 @@ def reshape_test():
 
 
 
-def gformat(row, col):
+def gformat(layer, row, col):
+    layer = float(layer) / 100.0
     col = float(col) / 10.0
-    val = float(row) + float(col)
+    val = float(row) + float(col) + float(layer)
     return val
 
 
@@ -98,18 +99,36 @@ def unfold_test():
 
     # --> Create array
     matrix = []
-    for x in range(10):
-        row = []
-        for y in range(10):
-            row.append(gformat(x, y))
-        matrix.append(row)
+    for l in range(7):
+        layer = []
+        for x in range(10):
+            row = []
+            for y in range(10):
+                row.append(gformat(l, x, y))
+            layer.append(row)
+        matrix.append(layer)
     pmatrix(matrix)
 
     np_array = np.array(matrix)
     tensor = torch.as_tensor(np_array)
 
     print('--> ORIGINAL TENSOR')
-    print(tensor)
+    print(tensor.size())
+
+    print('--> UNFOLD')
+    patches = tensor.unfold(1, 2, 2)
+    print(patches.size())
+
+    print('--> UNFOLD')
+    patches = patches.unfold(2, 2, 2)
+    print(patches.size())
+
+    print('\n-------------------------')
+
+    print(patches)
+
+
+
 
 
 
