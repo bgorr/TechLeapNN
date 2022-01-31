@@ -41,8 +41,8 @@ class NeuralNetClient:
         # --> Data
         self.result_file = './output/results.p'
 
-        self.training_dataset = pickle.load(open('./output/training_dataset.p', 'rb'))
-        self.test_dataset = pickle.load(open('./output/test_dataset.p', 'rb'))
+        self.training_dataset = pickle.load(open('./output/training_dataset_7b.p', 'rb'))
+        self.test_dataset = pickle.load(open('./output/test_dataset_7b.p', 'rb'))
 
         self.training_tensor = torch.utils.data.DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         self.test_tensor = torch.utils.data.DataLoader(dataset=self.test_dataset, batch_size=self.batch_size, shuffle=True)
@@ -91,7 +91,6 @@ class NeuralNetClient:
             self._train(epoch)
 
         # --> 2. Get results of trained model
-        print('\n--> TESTING MODEL')
         results = self.test(doSave=True, threshold=self.threshold, epoch=epochs-1)
 
         # --> 3. Save final epoch results
@@ -193,22 +192,31 @@ class NeuralNetClient:
     """
 
     def test(self, doSave, threshold, epoch):
+        print('\n--> TESTING MODEL: running model')
         self.model.eval()
-        n_batches = 0
         acc = []
+
         iou_mn = []
         iou_tp = []
         iou_tn = []
+
         wiou_tp = []
         wiou_tn = []
+
         all_targets = []
         all_out = []
         all_output = []
         all_pred = []
-        for data, target in self.test_tensor:
-            n_batches += 1
 
+
+
+        # --> Iterate over test dataset
+        for data, target in self.test_tensor:
+
+            # --> Image patch pixel data (p, c, 3200, 3200)
             data = Variable(data).float().to(self.device)
+
+            # --> Label patch pixel data (p, c, 3200, 3200)
             target = Variable(target).float().to(self.device)
 
             out = self.model(data)

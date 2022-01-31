@@ -159,7 +159,7 @@ class DataProcessingClient:
         #   - D3: y-pixel index
         bands = image_ds['observation_data'].variables
         img_data = None
-        specific_bands = ['M01', 'M03', 'M05', 'M07', 'M09']  # or band == "M11" or band == "M15":  # band == "M03":
+        specific_bands = ['M01', 'M03', 'M05', 'M07', 'M09', 'M11', 'M15']  # or band == "M11" or band == "M15":  # band == "M03":
         for band in bands:
             # bands --> M01: 0.402-0.422 | M03: 0.478-0.488 | M05: 0.662-0.682 | M07: 0.846-0.885 | M09: 1.371-1.386
             if band in specific_bands:
