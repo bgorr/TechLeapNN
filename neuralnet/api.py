@@ -114,7 +114,10 @@ class NeuralNetClient:
             self.optimizer.zero_grad()
 
             output = self.model(data)
+            print('--> MODEL PREDICTION:', output.size())
+
             output2 = torch.sigmoid(output)
+            print('--> MODEL PREDICTION SIGMOID:', output2.size())
 
             loss = self.loss_func(output2, target)
             loss.backward()
