@@ -205,29 +205,34 @@ class DataProcessingClient:
         return torch.as_tensor(labels)
 
     def process_patches(self, image_tensor, label_tensor):
+        print('--> IMAGE PATCHING')
+        print(image_tensor.size())
+
 
         # image_tensor: 5 x 3200 x 3200
-        # label_tensor: 3200 x 3200
-        print('--> IMAGE PATCHING')
-
-        # --> 1. Get image patches
+        # [7, 19, 3200, 161]
         image_patches = image_tensor.unfold(1, 161, 161)
         print(image_patches.size())
 
+        # [7, 19, 30, 161, 105]
         image_patches = image_patches.unfold(2, 105, 105)
         print(image_patches.size())
 
-        # 7 x 570 x 161 x 105
+        # [7, 570, 161, 105]
         image_patches = image_patches.contiguous().view(7, 570, 161, 105)
         print(image_patches.size())
 
-        # 570 x 7 x 161 x 105
+        # [570, 7, 161, 105]
         image_patches = image_patches.permute(1, 0, 2, 3)
         print(image_patches.size())
 
 
 
 
+
+
+
+        # label_tensor: 3200 x 3200
         # --> 2. Get label patches
         label_patches = label_tensor.unfold(0, 161, 161).unfold(1, 105, 105)
         label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
