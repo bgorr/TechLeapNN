@@ -82,7 +82,7 @@ class VanillaCNN(nn.Module):
         #   - Sigmoid Function: 1 / (1 + exp(-x))
         #       Properties
         #       - bounds: (0, 1)
-        print('--> FORWARD PROPAGATION:', x.size(), x.size(0))
+        # print('--> FORWARD PROPAGATION:', x.size(), x.size(0))
 
 
 
@@ -92,21 +92,21 @@ class VanillaCNN(nn.Module):
 
         # --> Pass inputs through first convolutional layer then apply activation function ReLU
         x1 = F.relu(self.conv1(x))
-        print(1, x1.size())
+        # print(1, x1.size())
 
         # --> Pass output of convolutional layer x1 as the input for 2 x 2 maximum pooling
         x1 = self.mp(x1)  # size=(N, 32, x.H/2, x.W/2)
-        print(2, x1.size())
+        # print(2, x1.size())
 
 
 
         # --> Pass inputs through second convolutional layer then apply activation function ReLU
         x2 = F.relu(self.conv2(x1))
-        print(3, x2.size())
+        # print(3, x2.size())
 
         # --> Pass output of convolutional layer x2 as the input for 2 x 2 maximum pooling
         x2 = self.mp(x2)  # size=(N, 64, x.H/4, x.H/4)
-        print(4, x2.size())
+        # print(4, x2.size())
 
 
 
@@ -114,11 +114,11 @@ class VanillaCNN(nn.Module):
 
         # --> Pass inputs through third convolutional layer then apply activation function ReLU
         x3 = F.relu(self.conv3(x2))
-        print(5, x3.size())
+        # print(5, x3.size())
 
         # --> Pass output of convolutional layer x3 as the input for 2 x 2 maximum pooling
         x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
-        print(6, x3.size())
+        # print(6, x3.size())
 
 
 
@@ -126,17 +126,17 @@ class VanillaCNN(nn.Module):
         # --> Transform output and pass through final linear nn layer
         x4 = x3.view(in_size, -1)
 
-        print('--> SHAPE BEFORE LINEAR TRANSFORM:', x4.size())
+        # print('--> SHAPE BEFORE LINEAR TRANSFORM:', x4.size())
         x4 = self.fc(x4)  # size=(N, n_class)
 
 
         y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
 
-        print('--> x1:', x1.size())
-        print('--> x2:', x2.size())
-        print('--> x3:', x3.size())
-        print('--> x4:', x4.size())
-        print('-->  y:', y.size())
+        # print('--> x1:', x1.size())
+        # print('--> x2:', x2.size())
+        # print('--> x3:', x3.size())
+        # print('--> x4:', x4.size())
+        # print('-->  y:', y.size())
 
 
 
@@ -187,10 +187,10 @@ class Encoding(nn.Module):
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
     def forward(self, x):
-        print('--> ENCODING FORWARD PROPAGATION:', x.size())
+        # print('--> ENCODING FORWARD PROPAGATION:', x.size())
         output = self.pretrained_net(x)
 
-        print('--> DECODING FORWARD PROPAGATION:', x.size())
+        # print('--> DECODING FORWARD PROPAGATION:', x.size())
         x3 = output[2]
         x2 = output[1]
         x1 = output[0]
@@ -198,21 +198,21 @@ class Encoding(nn.Module):
 
         # --> 1. Deconvolve
         score = self.relu(self.deconv1(x3))
-        print(1, score.size())
+        # print(1, score.size())
 
         # --> 2. Deconvolve
         score = self.bn1(score + x2)
         score = self.relu(self.deconv2(score))
-        print(2, score.size())
+        # print(2, score.size())
 
         # --> 3. Deconvolve
         score = self.bn2(score + x1)
         score = self.bn3(self.relu(self.deconv3(score)))
-        print(3, score.size())
+        # print(3, score.size())
 
         # --> 4. Classify score
         score = self.classifier(score)
-        print(4, score.size())
+        # print(4, score.size())
 
         return score
 
