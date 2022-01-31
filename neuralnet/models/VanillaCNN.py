@@ -187,6 +187,7 @@ class Encoding(nn.Module):
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
     def forward(self, x):
+        print('--> ENCODING FORWARD PROPAGATION:', x.size())
         output = self.pretrained_net(x)
         x3 = output[2]
         x2 = output[1]
@@ -197,5 +198,7 @@ class Encoding(nn.Module):
         score = self.bn2(score + x1)
         score = self.bn3(self.relu(self.deconv3(score)))
         score = self.classifier(score)
+
+        print(1, score.size())
         return score
 
