@@ -296,7 +296,7 @@ class DataProcessingClient:
         # [2500, 1, 64, 64]
         label_patches = label_patches.contiguous().view(-1, 1, 64, 64)
         print(label_patches.size())
-        print(label_patches[1, 1, :, :])
+        print(label_patches[1, 0, :, :])
 
         return label_patches
 
