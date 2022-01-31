@@ -152,13 +152,13 @@ class LossFunction(nn.Module):
         #inputs = F.sigmoid(inputs)
 
         # flatten label and prediction tensors
-        print('--> LOSS CALCULATION:', inputs.size(), targets.size())
+        # print('--> LOSS CALCULATION:', inputs.size(), targets.size())
 
 
 
         inputs = inputs.view(-1)
         targets = targets.view(-1)
-        print(1, inputs.size(), targets.size())
+        # print(1, inputs.size(), targets.size())
 
         intersection = (inputs * targets).sum()
         dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
