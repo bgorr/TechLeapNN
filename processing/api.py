@@ -151,7 +151,7 @@ class DataProcessingClient:
 
         return self.process_patches(image_tensor, label_tensor)
 
-    def process_image(self, image_ds):
+    def process_image(self, image_ds, remove_outliers=False):
 
         # --> 1. Get image data for all bands: 3D array
         #   - D1: Band
@@ -173,8 +173,9 @@ class DataProcessingClient:
                     img_data = np.concatenate((img_data, [np.array(band_data)]))
 
         # --> 2. Apply mask to 3D array
-        img_data = np.ma.masked_greater(img_data, 6.55e4)  # mask outliers
-        img_data = np.ma.filled(img_data, np.nan)
+        if remove_outliers is True:
+            img_data = np.ma.masked_greater(img_data, 6.55e4)  # mask outliers
+            img_data = np.ma.filled(img_data, np.nan)
 
         # --> 3. Return array as pytorch tensor
         return torch.as_tensor(img_data)
