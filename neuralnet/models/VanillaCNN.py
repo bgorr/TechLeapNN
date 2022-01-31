@@ -41,8 +41,8 @@ class VanillaCNN(nn.Module):
 
 
 
-        self.fc = nn.Linear(8192, 2)
-        # self.fc = nn.Linear(33280, 2)
+        # self.fc = nn.Linear(8192, 2)
+        self.fc = nn.Linear(33280, 2)
 
 
     """
