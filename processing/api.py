@@ -261,16 +261,16 @@ class DataProcessingClient:
 
 
 
-        # [7, 50, 3200, 64]
-        image_patches = image_tensor.unfold(1, 64, 64)
+        # [7, 16, 3200, 200]
+        image_patches = image_tensor.unfold(1, 200, 200)
         print(image_patches.size())
 
-        # [7, 50, 50, 64, 64]
-        image_patches = image_patches.unfold(2, 64, 64)
+        # [7, 16, 16, 200, 200]
+        image_patches = image_patches.unfold(2, 200, 200)
         print(image_patches.size())
 
-        # [7, 2500, 64, 64]
-        image_patches = image_patches.contiguous().view(7, 2500, 64, 64)
+        # [7, 256, 200, 200]
+        image_patches = image_patches.contiguous().view(7, 256, 200, 200)
         print(image_patches.size())
 
         # [2500, 7, 64, 64]
@@ -286,15 +286,15 @@ class DataProcessingClient:
 
 
         # [50, 3200, 64]
-        label_patches = label_tensor.unfold(0, 64, 64)
+        label_patches = label_tensor.unfold(0, 200, 200)
         print(label_patches.size())
 
         # [50, 50, 64, 64]
-        label_patches = label_patches.unfold(1, 64, 64)
+        label_patches = label_patches.unfold(1, 200, 200)
         print(label_patches.size())
 
-        # [2500, 1, 64, 64]
-        label_patches = label_patches.contiguous().view(-1, 1, 64, 64)
+        # [256, 1, 200, 200]
+        label_patches = label_patches.contiguous().view(-1, 1, 200, 200)
         print(label_patches.size())
 
         return label_patches
@@ -344,7 +344,7 @@ class DataProcessingClient:
             AA -= AA.mean(1, keepdim=True)[0]
             AA /= AA.std(1, keepdim=True)[0]
             # AA = AA.view(image_patches.size(0), 161, 105)
-            AA = AA.view(image_patches.size(0), 64, 64)
+            AA = AA.view(image_patches.size(0), 200, 200)
             image_patches[:, i, :, :] = AA
 
         return image_patches, label_patches
