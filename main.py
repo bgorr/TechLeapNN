@@ -1,5 +1,3 @@
-from processing.api import DataProcessingClient
-from neuralnet.api import NeuralNetClient
 
 
 import numpy as np
@@ -62,29 +60,6 @@ def interpolate_test():
     return 0
 
 
-def unfold_test():
-
-
-    # --> 1. Generate numpy 2D array: 3 x 3
-    test_arr = [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]
-    ]
-    np_array = np.array(test_arr)
-    print('\n---> NUMPY ARRAY')
-    print_imo(np_array)
-
-    # --> 2. Convert to tensor
-    tensor = torch.as_tensor(np_array)
-    print_imo(tensor)
-
-    # --> 3. Unfold
-    patches = tensor.unfold(0, 1, 1)
-    print_imo(patches)
-
-
-    return 0
 
 
 def reshape_test():
@@ -104,40 +79,68 @@ def reshape_test():
 
 
 
-def processing():
 
-    # --> 1. Process training data
-    data_dir = '/home/ec2-user/repos/TechLeapNN/data/viirs/training_dataset'
-    save_path = '/home/ec2-user/repos/TechLeapNN/output/training_dataset.p'
-    processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
-    processing_client.build()
-    processing_client.run()
-
-    # --> 2. Process test data
-    data_dir = '/home/ec2-user/repos/TechLeapNN/data/viirs/test_dataset'
-    save_path = '/home/ec2-user/repos/TechLeapNN/output/test_dataset.p'
-    processing_client = DataProcessingClient(data_dir=data_dir, save_path=save_path)
-    processing_client.build()
-    processing_client.run()
-
-
-def neuralnet_test():
-    print('--> TESTING NEURAL NET')
-
-    client = NeuralNetClient()
-
-    client.train(epochs=20, save=True, plot=False)
+def gformat(row, col):
+    col = float(col) / 10.0
+    val = float(row) + float(col)
+    return val
 
 
 
+def pmatrix(mat):
+    for row in mat:
+        print(row)
 
 
 
+def unfold_test():
+
+
+    # --> Create array
+    matrix = []
+    for x in range(10):
+        row = []
+        for y in range(10):
+            row.append(gformat(x, y))
+        matrix.append(row)
+    pmatrix(matrix)
+
+    np_array = np.array(matrix)
+    tensor = torch.as_tensor(np_array)
+
+    print('--> ORIGINAL TENSOR')
+    print(tensor)
+
+
+
+
+
+    #
+    # # --> 1. Generate numpy 2D array: 3 x 3
+    # test_arr = [
+    #     [1, 2, 3],
+    #     [4, 5, 6],
+    #     [7, 8, 9]
+    # ]
+    # np_array = np.array(test_arr)
+    # print('\n---> NUMPY ARRAY')
+    # print_imo(np_array)
+    #
+    # # --> 2. Convert to tensor
+    # tensor = torch.as_tensor(np_array)
+    # print_imo(tensor)
+    #
+    # # --> 3. Unfold
+    # patches = tensor.unfold(0, 1, 1)
+    # print_imo(patches)
+
+
+    return 0
 
 
 
 if __name__ == "__main__":
-    processing()
+    unfold_test()
 
 
 

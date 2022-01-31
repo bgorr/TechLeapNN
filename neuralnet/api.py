@@ -221,7 +221,7 @@ class NeuralNetClient:
             # --> Image patch pixel data (p, c, 161, 105) -> [64, 7, 161, 105]
             data = Variable(data).float().to(self.device)
 
-            # --> Label patch pixel data (p, c, 3200, 3200)
+            # --> Label patch pixel data (p, c, 161, 105) -> [64, 2, 161, 105]
             target = Variable(target).float().to(self.device)
 
             out = self.model(data)
