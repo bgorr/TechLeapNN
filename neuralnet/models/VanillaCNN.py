@@ -89,6 +89,8 @@ class VanillaCNN(nn.Module):
 
         # --> Transform output and pass through final linear nn layer
         x4 = x3.view(in_size, -1)
+
+        print('--> SHAPE BEFORE LINEAR TRANSFORM:', x4.size())
         x4 = self.fc(x4)  # size=(N, n_class)
 
 
