@@ -18,9 +18,10 @@ def _proc():
 class DataProcessingClient:
 
 
-    def __init__(self, data_dir=None, save_path=None):
+    def __init__(self, data_dir=None, save_path=None, psize=200):
 
         # --> Training Data <--
+        self.psize = psize
         self.data_dir = '/app/data/viirs/training_dataset'  # Default path
         if data_dir is not None:
             self.data_dir = data_dir
@@ -263,15 +264,15 @@ class DataProcessingClient:
 
 
         # [7, 16, 3200, 200]
-        image_patches = image_tensor.unfold(1, 800, 800)
+        image_patches = image_tensor.unfold(1, 200, 200)
         print(image_patches.size())
 
         # [7, 100, 100, 32, 32]
-        image_patches = image_patches.unfold(2, 800, 800)
+        image_patches = image_patches.unfold(2, 200, 200)
         print(image_patches.size())
 
         # [7, 10000, 32, 32]
-        image_patches = image_patches.contiguous().view(7, 16, 800, 800)
+        image_patches = image_patches.contiguous().view(7, 256, 200, 200)
         print(image_patches.size())
 
         # [10000, 7, 32, 32]
@@ -300,16 +301,64 @@ class DataProcessingClient:
 
         return label_patches
 
+    def extract_patch_size_img(self, image_tensor):
+        print('--> IMAGE PATCHING')
+        print(image_tensor.size())
+        # image_tensor: 7 x 3200 x 3200
+
+        slices = 3200 / self.psize
+        slices *= slices
+
+        # [7, 16, 3200, 200]
+        image_patches = image_tensor.unfold(1, self.psize, self.psize)
+        print(image_patches.size())
+
+        # [7, 100, 100, 32, 32]
+        image_patches = image_patches.unfold(2, self.psize, self.psize)
+        print(image_patches.size())
+
+        # [7, 10000, 32, 32]
+        image_patches = image_patches.contiguous().view(7, slices, self.psize, self.psize)
+        print(image_patches.size())
+
+        # [10000, 7, 32, 32]
+        image_patches = image_patches.permute(1, 0, 2, 3)
+        print(image_patches.size())
+
+        return image_patches
+
+    def extract_patch_size_lbl(self, label_tensor):
+        print('--> LABEL PATCHING')
+        print(label_tensor.size())
+        # label_tensor: 3200 x 3200
+
+        slices = 3200 / self.psize
+        slices *= slices
+
+
+        # [50, 3200, 64]
+        label_patches = label_tensor.unfold(0, self.psize, self.psize)
+        print(label_patches.size())
+
+        # [50, 50, 64, 64]
+        label_patches = label_patches.unfold(1, self.psize, self.psize)
+        print(label_patches.size())
+
+        # [256, 1, 200, 200]
+        label_patches = label_patches.contiguous().view(-1, 1, self.psize, self.psize)
+        print(label_patches.size())
+
+
 
 
 
     def process_patches(self, image_tensor, label_tensor):
 
         # --> 1. Get image patches: [570, 7, 161, 105]
-        image_patches = self.extract_image_patches_2(image_tensor)
+        image_patches = self.extract_patch_size_img(image_tensor)
 
         # --> 2. Get label patches: [570, 1, 161, 105]
-        label_patches = self.extract_label_patches_2(label_tensor)
+        label_patches = self.extract_patch_size_lbl(label_tensor)
 
         # --> 3. Clean patches of NAN values
 
@@ -350,7 +399,7 @@ class DataProcessingClient:
             AA -= AA.mean(1, keepdim=True)[0]
             AA /= AA.std(1, keepdim=True)[0]
             # AA = AA.view(image_patches.size(0), 161, 105)
-            AA = AA.view(image_patches.size(0), 800, 800)
+            AA = AA.view(image_patches.size(0), self.psize, self.psize)
             image_patches[:, i, :, :] = AA
 
         return image_patches, label_patches

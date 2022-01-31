@@ -42,8 +42,8 @@ class VanillaCNN(nn.Module):
 
 
 
-        self.fc = nn.Linear(80000, 2)  # 800 x 800 patches
-        # self.fc = nn.Linear(80000, 2) # 200 x 200 patches
+        # self.fc = nn.Linear(80000, 2)  # 800 x 800 patches
+        self.fc = nn.Linear(80000, 2) # 200 x 200 patches
         # self.fc = nn.Linear(8192, 2) # 64 x 64 patches
         # self.fc = nn.Linear(2048, 2) # 32 x 32 patches
         # self.fc = nn.Linear(33280, 2) # 161 x 105 patches
