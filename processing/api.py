@@ -18,7 +18,7 @@ def _proc():
 class DataProcessingClient:
 
 
-    def __init__(self, data_dir=None, save_path=None, psize=200):
+    def __init__(self, data_dir=None, save_path=None, psize=100):
 
         # --> Training Data <--
         self.psize = psize
@@ -152,7 +152,7 @@ class DataProcessingClient:
 
         return self.process_patches(image_tensor, label_tensor)
 
-    def process_image(self, image_ds, remove_outliers=False):
+    def process_image(self, image_ds, remove_outliers=True):
 
         # --> 1. Get image data for all bands: 3D array
         #   - D1: Band
@@ -165,13 +165,22 @@ class DataProcessingClient:
             # bands --> M01: 0.402-0.422 | M03: 0.478-0.488 | M05: 0.662-0.682 | M07: 0.846-0.885 | M09: 1.371-1.386
             if band in specific_bands:
                 band_data = bands[band]  # 3248 x 3200 | 3232 x 3200
-                band_data = band_data[:3200, :]
+                band_data = band_data[:3200, :] # 3200 x 3200
+
+                # upscale image
+                band_data = cv2.resize(band_data, dsize=(9600, 9600), interpolation=cv2.INTER_CUBIC)
+
+
+
 
                 if img_data is None:
                     img_data = np.array(band_data)
                     img_data = img_data[None]
                 else:
                     img_data = np.concatenate((img_data, [np.array(band_data)]))
+
+
+
 
         # --> 2. Apply mask to 3D array
         if remove_outliers is True:
@@ -201,7 +210,7 @@ class DataProcessingClient:
                     labels[i][j] = 0.0
 
         # --> 3. Reshape labels through interpolation: 400 x 400 --> 3200 x 3200
-        labels = cv2.resize(labels, dsize=(3200, 3200), interpolation=cv2.INTER_NEAREST_EXACT)
+        labels = cv2.resize(labels, dsize=(9600, 9600), interpolation=cv2.INTER_NEAREST_EXACT)
 
         # --> 4. Finally get tensor and return
         return torch.as_tensor(labels)
@@ -269,7 +278,7 @@ class DataProcessingClient:
         print(image_tensor.size())
         # image_tensor: 7 x 3200 x 3200
 
-        slices = 3200 / self.psize
+        slices = 9600 / self.psize
         slices *= slices
 
         # [7, 16, 3200, 200]
