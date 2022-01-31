@@ -55,6 +55,9 @@ class VanillaCNN(nn.Module):
         #   - Sigmoid Function: 1 / (1 + exp(-x))
         #       Properties
         #       - bounds: (0, 1)
+        print('--> FORWARD PROPAGATION:', x.size(), x.size(0))
+
+
 
         in_size = x.size(0)
 
@@ -62,17 +65,21 @@ class VanillaCNN(nn.Module):
 
         # --> Pass inputs through first convolutional layer then apply activation function ReLU
         x1 = F.relu(self.conv1(x))
+        print(1, x1.size())
 
         # --> Pass output of convolutional layer x1 as the input for 2 x 2 maximum pooling
         x1 = self.mp(x1)  # size=(N, 32, x.H/2, x.W/2)
+        print(2, x1.size())
 
 
 
         # --> Pass inputs through second convolutional layer then apply activation function ReLU
         x2 = F.relu(self.conv2(x1))
+        print(3, x2.size())
 
         # --> Pass output of convolutional layer x2 as the input for 2 x 2 maximum pooling
         x2 = self.mp(x2)  # size=(N, 64, x.H/4, x.H/4)
+        print(4, x2.size())
 
 
 
@@ -80,9 +87,11 @@ class VanillaCNN(nn.Module):
 
         # --> Pass inputs through third convolutional layer then apply activation function ReLU
         x3 = F.relu(self.conv3(x2))
+        print(5, x3.size())
 
         # --> Pass output of convolutional layer x3 as the input for 2 x 2 maximum pooling
         x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
+        print(6, x3.size())
 
 
 
