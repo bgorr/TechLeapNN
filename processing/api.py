@@ -237,13 +237,13 @@ class DataProcessingClient:
         print(label_tensor.size())
         # label_tensor: 3200 x 3200
 
-        
+
         # [19, 3200, 161]
         label_patches = label_tensor.unfold(0, 161, 161)
         print(label_patches.size())
 
         # [19, 30, 161, 105]
-        label_patches = label_tensor.unfold(1, 105, 105)
+        label_patches = label_patches.unfold(1, 105, 105)
         print(label_patches.size())
 
         # [570, 161, 105]
