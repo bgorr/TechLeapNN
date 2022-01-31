@@ -130,9 +130,16 @@ class VanillaCNN(nn.Module):
         x4 = self.fc(x4)  # size=(N, n_class)
 
 
-
-
         y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
+
+        print('--> x1:', x1.size())
+        print('--> x2:', x2.size())
+        print('--> x3:', x3.size())
+        print('--> x4:', x4.size())
+        print('-->  y:', y.size())
+
+
+
         return x1, x2, x3, x4, y
 
 
