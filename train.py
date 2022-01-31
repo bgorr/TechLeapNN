@@ -15,8 +15,8 @@ def train():
 
     print('--> TESTING NEURAL NET')
 
-    training_dataset = './output/training_dataset_7b_64.p'
-    test_dataset = './output/test_dataset_7b_64.p'
+    training_dataset = './output/training_dataset_7b_200.p'
+    test_dataset = './output/test_dataset_7b_200.p'
     result_file = './output/results.p'
 
 
