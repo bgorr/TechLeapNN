@@ -83,7 +83,7 @@ class NeuralNetClient:
        |_||_|   \__,_||_||_| |_|                      
     """
 
-    def train(self, epochs=50, save=True, plot=True):
+    def train(self, epochs=10, save=True, plot=True):
         results = None
 
         # --> 1. Train desired number of epochs
@@ -192,8 +192,9 @@ class NeuralNetClient:
     """
 
     def test(self, doSave, threshold, epoch):
-        print('\n--> TESTING MODEL: running model')
+        print('\n--> TESTING MODEL: initializing')
         self.model.eval()
+
         acc = []
 
         iou_mn = []
@@ -211,7 +212,10 @@ class NeuralNetClient:
 
 
         # --> Iterate over test dataset
+        counter = 0
         for data, target in self.test_tensor:
+            counter += 1
+            print('--> Test patch:', counter)
 
             # --> Image patch pixel data (p, c, 3200, 3200)
             data = Variable(data).float().to(self.device)
@@ -241,9 +245,9 @@ class NeuralNetClient:
         ee = self.listMean(iou_tn, 1)
         ff = self.listMean(wiou_tn, 2)
 
-        print('\n-----> Testing model:', epoch, 'epochs')
-        print('--> Accuracy:', str(round(100 * aa, 2)) + '%')
-        print('--> IoU:', str(round(100 * bb, 2)) + '%')
+        print('\n--> Testing model:', epoch, 'epochs <--')
+        print('-------> Accuracy:', str(round(100 * aa, 2)) + '%')
+        print('------------> IoU:', str(round(100 * bb, 2)) + '%')
         print('--> True Positive:', str(round(100 * dd, 2)) + '%')
         print('--> True Negative:', str(round(100 * ff, 2)) + '%')
 
