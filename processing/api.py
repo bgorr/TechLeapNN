@@ -270,7 +270,7 @@ class DataProcessingClient:
         print(image_patches.size())
 
         # [7, 10000, 32, 32]
-        image_patches = image_patches.contiguous().view(7, 4, 800, 800)
+        image_patches = image_patches.contiguous().view(7, 16, 800, 800)
         print(image_patches.size())
 
         # [10000, 7, 32, 32]
