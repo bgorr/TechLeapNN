@@ -211,7 +211,7 @@ class DataProcessingClient:
 
         # --> 1. Get image patches
         image_patches = image_tensor.unfold(1, 161, 161).unfold(2, 105, 105)
-        image_patches = image_patches.contiguous().view(5, 570, 161, 105)
+        image_patches = image_patches.contiguous().view(7, 570, 161, 105)
         image_patches = image_patches.permute(1, 0, 2, 3)
 
         # --> 2. Get label patches
