@@ -326,9 +326,14 @@ class DataProcessingClient:
         image_tensor_slices = []
         label_tensor_slices = []
         for i in range(image_patches.size(0)):
-            if not (image_patches[i, :, :, :].isnan().any() or not torch.isin(1, label_patches[i, :, :, :]).any()):
-                image_tensor_slices.append(image_patches[i:i + 1, :, :, :])
-                label_tensor_slices.append(label_patches[i:i + 1, :, :, :])
+            if not image_patches[i, :, :, :].isnan().any():
+                if torch.isin(1, label_patches[i, :, :, :]).any():
+                    image_tensor_slices.append(image_patches[i:i + 1, :, :, :])
+                    label_tensor_slices.append(label_patches[i:i + 1, :, :, :])
+                else:
+                    print('--> IMAGE PATCH CONTAINS NO TRUE VALUES')
+            else:
+                print('--> IMAGE PATCH CONTAINS NANs')
 
         if len(image_tensor_slices) == 0 or len(label_tensor_slices) == 0:
             return None, None
