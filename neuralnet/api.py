@@ -34,7 +34,7 @@ class NeuralNetClient:
 
         # --> Model Parameters
         self.device = 'cuda'
-        self.batch_size = 256
+        self.batch_size = 512
         self.num_classes = 2
         self.threshold = torch.Tensor([.666]).to(self.device)
 
