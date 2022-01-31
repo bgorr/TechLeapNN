@@ -74,7 +74,7 @@ class VanillaCNN(nn.Module):
 
 
 
-    def forward(self, x, debug=True):
+    def forward(self, x, debug=False):
 
         # Activation Functions
         #   - Rectified Linear Unit: ReLU(x) = max(x,0)
