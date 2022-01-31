@@ -204,12 +204,16 @@ class DataProcessingClient:
         # --> 4. Finally get tensor and return
         return torch.as_tensor(labels)
 
-    def process_patches(self, image_tensor, label_tensor):
+
+
+
+    def extract_image_patches(self, image_tensor):
         print('--> IMAGE PATCHING')
         print(image_tensor.size())
+        # image_tensor: 7 x 3200 x 3200
 
 
-        # image_tensor: 5 x 3200 x 3200
+
         # [7, 19, 3200, 161]
         image_patches = image_tensor.unfold(1, 161, 161)
         print(image_patches.size())
@@ -226,16 +230,38 @@ class DataProcessingClient:
         image_patches = image_patches.permute(1, 0, 2, 3)
         print(image_patches.size())
 
+        return image_patches
 
-
-
-
-
-
+    def extract_label_patches(self, label_tensor):
+        print('--> LABEL PATCHING')
+        print(label_tensor.size())
         # label_tensor: 3200 x 3200
-        # --> 2. Get label patches
-        label_patches = label_tensor.unfold(0, 161, 161).unfold(1, 105, 105)
+
+        
+        # [19, 3200, 161]
+        label_patches = label_tensor.unfold(0, 161, 161)
+        print(label_patches.size())
+
+        # [19, 30, 161, 105]
+        label_patches = label_tensor.unfold(1, 105, 105)
+        print(label_patches.size())
+
+        # [570, 161, 105]
         label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
+        print(label_patches.size())
+
+        return label_patches
+
+
+
+
+    def process_patches(self, image_tensor, label_tensor):
+
+        # --> 1. Get image patches: [570, 7, 161, 105]
+        image_patches = self.extract_image_patches(image_tensor)
+
+        # --> 2. Get label patches:
+        label_patches = self.extract_label_patches(label_tensor)
 
         # --> 3. Clean patches of NAN values
 
