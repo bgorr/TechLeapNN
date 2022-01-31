@@ -182,7 +182,7 @@ class Encoding(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn2 = nn.BatchNorm2d(32)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1, output_padding=1)
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn3 = nn.BatchNorm2d(16)
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
