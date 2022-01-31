@@ -43,6 +43,23 @@ class VanillaCNN(nn.Module):
 
         self.fc = nn.Linear(33280, 2)
 
+
+    """
+        --> FORWARD PROPAGATION: torch.Size([64, 7, 64, 64]) 64
+        1 torch.Size([64, 32, 64, 64])
+        2 torch.Size([64, 32, 32, 32])
+        3 torch.Size([64, 64, 32, 32])
+        4 torch.Size([64, 64, 16, 16])
+        5 torch.Size([64, 128, 16, 16])
+        6 torch.Size([64, 128, 8, 8])
+        --> SHAPE BEFORE LINEAR TRANSFORM: torch.Size([64, 8192])
+        
+        
+        
+    """
+
+
+
     def forward(self, x):
         # Activation Functions
         #   - Rectified Linear Unit: ReLU(x) = max(x,0)
