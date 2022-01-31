@@ -261,19 +261,19 @@ class DataProcessingClient:
 
 
 
-        # [7, 19, 3200, 161]
-        image_patches = image_tensor.unfold(1, 161, 161)
+        # [7, 50, 3200, 64]
+        image_patches = image_tensor.unfold(1, 64, 64)
         print(image_patches.size())
 
-        # [7, 19, 30, 161, 105]
-        image_patches = image_patches.unfold(2, 105, 105)
+        # [7, 50, 50, 64, 64]
+        image_patches = image_patches.unfold(2, 64, 64)
         print(image_patches.size())
 
-        # [7, 570, 161, 105]
-        image_patches = image_patches.contiguous().view(7, 570, 161, 105)
+        # [7, 2500, 64, 64]
+        image_patches = image_patches.contiguous().view(7, 2500, 64, 64)
         print(image_patches.size())
 
-        # [570, 7, 161, 105]
+        # [2500, 7, 64, 64]
         image_patches = image_patches.permute(1, 0, 2, 3)
         print(image_patches.size())
 
@@ -296,7 +296,6 @@ class DataProcessingClient:
         # [2500, 1, 64, 64]
         label_patches = label_patches.contiguous().view(-1, 1, 64, 64)
         print(label_patches.size())
-        print(label_patches[1, 0, :, :])
 
         return label_patches
 
