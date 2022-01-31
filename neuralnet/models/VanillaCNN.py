@@ -41,10 +41,23 @@ class VanillaCNN(nn.Module):
 
 
 
-        self.fc = nn.Linear(33280, 2)
+        self.fc = nn.Linear(8192, 2)
+        # self.fc = nn.Linear(33280, 2)
 
 
     """
+        --> FORWARD PROPAGATION: torch.Size([64, 7, 161, 105]) 64
+        1 torch.Size([64, 32, 161, 105])
+        2 torch.Size([64, 32, 80, 52])
+        3 torch.Size([64, 64, 80, 52])
+        4 torch.Size([64, 64, 40, 26])
+        5 torch.Size([64, 128, 40, 26])
+        6 torch.Size([64, 128, 20, 13])
+        --> SHAPE BEFORE LINEAR TRANSFORM: torch.Size([64, 33280])
+    
+    
+    
+    
         --> FORWARD PROPAGATION: torch.Size([64, 7, 64, 64]) 64
         1 torch.Size([64, 32, 64, 64])
         2 torch.Size([64, 32, 32, 32])
@@ -52,10 +65,7 @@ class VanillaCNN(nn.Module):
         4 torch.Size([64, 64, 16, 16])
         5 torch.Size([64, 128, 16, 16])
         6 torch.Size([64, 128, 8, 8])
-        --> SHAPE BEFORE LINEAR TRANSFORM: torch.Size([64, 8192])
-        
-        
-        
+        --> SHAPE BEFORE LINEAR TRANSFORM: torch.Size([64, 8192]) 
     """
 
 
