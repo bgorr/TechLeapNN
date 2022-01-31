@@ -246,7 +246,54 @@ class DataProcessingClient:
         label_patches = label_patches.unfold(1, 105, 105)
         print(label_patches.size())
 
-        # [570, 161, 105]
+        # [570, 1, 161, 105]
+        label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
+        print(label_patches.size())
+
+        return label_patches
+
+
+
+    def extract_image_patches_2(self, image_tensor):
+        print('--> IMAGE PATCHING')
+        print(image_tensor.size())
+        # image_tensor: 7 x 3200 x 3200
+
+
+
+        # [7, 19, 3200, 161]
+        image_patches = image_tensor.unfold(1, 161, 161)
+        print(image_patches.size())
+
+        # [7, 19, 30, 161, 105]
+        image_patches = image_patches.unfold(2, 105, 105)
+        print(image_patches.size())
+
+        # [7, 570, 161, 105]
+        image_patches = image_patches.contiguous().view(7, 570, 161, 105)
+        print(image_patches.size())
+
+        # [570, 7, 161, 105]
+        image_patches = image_patches.permute(1, 0, 2, 3)
+        print(image_patches.size())
+
+        return image_patches
+
+    def extract_label_patches_2(self, label_tensor):
+        print('--> LABEL PATCHING')
+        print(label_tensor.size())
+        # label_tensor: 3200 x 3200
+
+
+        # [50, 3200, 64]
+        label_patches = label_tensor.unfold(0, 64, 64)
+        print(label_patches.size())
+
+        # [50, 50, 64, 64]
+        label_patches = label_patches.unfold(1, 64, 64)
+        print(label_patches.size())
+
+        # [570, 1, 161, 105]
         label_patches = label_patches.contiguous().view(-1, 1, 161, 105)
         print(label_patches.size())
 
@@ -258,10 +305,10 @@ class DataProcessingClient:
     def process_patches(self, image_tensor, label_tensor):
 
         # --> 1. Get image patches: [570, 7, 161, 105]
-        image_patches = self.extract_image_patches(image_tensor)
+        image_patches = self.extract_image_patches_2(image_tensor)
 
-        # --> 2. Get label patches:
-        label_patches = self.extract_label_patches(label_tensor)
+        # --> 2. Get label patches: [570, 1, 161, 105]
+        label_patches = self.extract_label_patches_2(label_tensor)
 
         # --> 3. Clean patches of NAN values
 
