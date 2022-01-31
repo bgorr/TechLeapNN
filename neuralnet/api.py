@@ -216,7 +216,7 @@ class NeuralNetClient:
         for data, target in self.test_tensor:
             counter += 1
             print('--> Test image:', counter, data.size())
-            print('--> Test label:', target, data.size())
+            print('--> Test label:', counter, target.size())
 
             # --> Image patch pixel data (p, c, 161, 105) -> [64, 7, 161, 105]
             data = Variable(data).float().to(self.device)
