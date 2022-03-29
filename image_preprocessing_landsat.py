@@ -16,21 +16,24 @@ import pickle
 
 # you'll have to point these to your dataset location
 img_dir = "/home/ben/Documents/landsat_downloads/scene1/landsat_bands"
-lbl_path = "/home/ben/Documents/landsat_downloads/scene1/groundtruth.tif"
+lbl_path = "/home/ben/Documents/landsat_downloads/scene1/cirrus_groundtruth.tif"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
 bands = np.zeros(shape=(7911, 7781, 11))
-for idx in range(len(os.listdir(img_dir))):  # len(os.listdir(img_dir))
-    print(idx)
-    if idx == 3 or idx == 4 or idx == 7:
+for str in os.listdir(img_dir):  # len(os.listdir(img_dir))
+    print(str)
+    substr = str[42:44]
+    if "." in substr:
+        substr = substr[0:1]
+    band = int(substr)
+    if band == 8:
         continue
-    img_files = [f for f in os.listdir(img_dir)]
-    band_path = os.path.join(img_dir, img_files[idx])
-    band = Image.open(band_path)
-    band_array = np.array(band)
-    bands[:, :, idx] = band_array
-bands = np.delete(bands, [3,4,7,10], 2)
+    band_path = os.path.join(img_dir, str)
+    band_data = Image.open(band_path)
+    band_array = np.array(band_data)
+    bands[:, :, band-1] = band_array
+bands = np.delete(bands, [0,5,6,7,8,9], 2)
 #bands = np.delete(bands, 4, 2)
 #bands = np.delete(bands, 7, 2)
 label = Image.open(lbl_path)
@@ -45,21 +48,27 @@ height = 161
 width = 105
 image = image.permute(2,0,1)
 patches = image.unfold(1, height, height).unfold(2, width, width)
-patches = patches.contiguous().view(7, patches.size(1)*patches.size(2), height, width)
+patches = patches.contiguous().view(5, patches.size(1)*patches.size(2), height, width)
 lbl_patches = label.unfold(0, height, height).unfold(1, width, width)
 lbl_patches = lbl_patches.contiguous().view(-1, 1, height, width)
 patches = patches.permute(1, 0, 2, 3)
 #truth = torch.isin(1,label).any().item()
 truth = torch.isin(1.0,lbl_patches).any().item()
 # eliminate entries with nan values (can't pass nan values into neural net)
-i = 10
-while i < patches.size(0):
-    if not torch.isin(1.0, lbl_patches[i, :, :, :]).any().item():
-        patches = torch.cat([patches[0:i, :, :, :], patches[i+1:, :, :, :]])
-        lbl_patches = torch.cat([lbl_patches[0:i, :, :, :], lbl_patches[i+1:, :, :, :]])
+image_tensor_slices = []
+label_tensor_slices = []
+for i in range(patches.size(0)):
+    if not patches[i, :, :, :].isnan().any():
+        if torch.isin(1, lbl_patches[i, :, :, :]).any():
+            image_tensor_slices.append(patches[i:i + 1, :, :, :])
+            label_tensor_slices.append(lbl_patches[i:i + 1, :, :, :])
+        else:
+            print('--> IMAGE PATCH CONTAINS NO TRUE VALUES')
     else:
-        i = i + 1
-        print("at least one good picture")
+        print('--> IMAGE PATCH CONTAINS NANs')
+
+patches = torch.cat(image_tensor_slices)
+lbl_patches = torch.cat(label_tensor_slices)
 # do mean and unit variance by band
 for i in range(patches.size(1)):
     AA = patches[:, i, :, :].clone()
@@ -139,7 +148,7 @@ for i in range(totalTensor.size(0)):
     dataset.append((dat, target3))
 
 # save dataset
-filename = './output/landsat_dataset.p'
+filename = './output/landsat_dataset_scene1_cirrus_5bands.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()
