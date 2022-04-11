@@ -1,0 +1,3 @@
+5 bands, manual: Test Epoch: 199	 Accuracy: 89.13%, IoU: 58.96%, TP IoU: 29.7(49.38)%, TN IoU = 88.21(88.35)%
+5 bands: Test Epoch: 199	 Accuracy: 89.93%, IoU: 54.27%, TP IoU: 27.38(59.67)%, TN IoU = 81.15(88.32)%
+7 bands: Test Epoch: 199	 Accuracy: 92.64%, IoU: 61.08%, TP IoU: 33.77(47.4)%, TN IoU = 88.38(91.54)%

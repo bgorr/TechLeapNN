@@ -241,7 +241,6 @@ DEVICE = "cuda"
 # network settings
 batch_size = 1
 n_class = 2
-n_epochs = 200
 
 # set threshold
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
@@ -271,10 +270,10 @@ random.seed(1319)
 train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size, shuffle=False)
 
-# initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model,input_size=(5,161,105),batch_size=-1, device='cuda'))
+model.load_state_dict(torch.load('./output/trained_net.p'))
+model.eval()
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
 weights = torch.tensor([1, 19], dtype=torch.float32)
 weights = weights / weights.sum()
@@ -285,15 +284,13 @@ weights = weights / weights.sum()
 loss_fn = DiceLoss()
 
 # run for NT Data Set
-for epoch in range(n_epochs):
-    train(epoch)
-    results = test(doSave=((epoch + 1) == n_epochs), threshold=thres)
+epoch = 1
+n_epochs = 1
+results = test(doSave=((epoch) == n_epochs), threshold=thres)
 
 test_dat = []
 for dat, _ in test_loader:
     test_dat.append(dat)
-
-torch.save(model.state_dict(), './output/trained_net.p')
 
 results_filename = './output/results.p'
 results_f = open(results_filename, 'wb')
@@ -327,25 +324,33 @@ for i in range(len(results[0])):
         z = Z[j, :, :].detach().numpy()
         yhat = Yhat[j, :, :].detach().numpy()
         yest = Yest[j, :, :].detach().numpy()
-        plt.subplot(2, 4, 1)
+        plt.subplot(2, 3, 1)
         plt.imshow(img)
-        plt.subplot(2, 4, 2)
+        plt.axis("off")
+        plt.title("RGB composite")
+        plt.subplot(2, 3, 2)
         plt.imshow(red)
-        plt.subplot(2, 4, 3)
+        plt.axis("off")
+        plt.title("Red")
+        plt.subplot(2, 3, 3)
         plt.imshow(ir)
-        plt.subplot(2, 4, 4)
+        plt.axis("off")
+        plt.title("NIR")
+        plt.subplot(2, 3, 4)
         plt.imshow(swir)
+        plt.axis("off")
+        plt.title("TIR")
         # plt.subplot(2, 4, 5)
         # plt.imshow(clouds)
         # plt.subplot(2, 4, 6)
         # plt.imshow(temp)
-        plt.subplot(2, 4, 5)
+        plt.subplot(2, 3, 5)
         plt.imshow(z)
-        plt.subplot(2, 4, 6)
-        plt.imshow(y)
-        plt.subplot(2, 4, 7)
+        plt.axis("off")
+        plt.title("Ground truth")
+        plt.subplot(2, 3, 6)
         plt.imshow(yhat)
-        plt.subplot(2, 4, 8)
-        plt.imshow(yest)
+        plt.axis("off")
+        plt.title("Prediction")
         plt.savefig('./allplots/fig{}{}.png'.format(i, j))
         plt.close('all')
