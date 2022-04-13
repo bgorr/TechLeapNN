@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
@@ -237,7 +238,7 @@ def test(doSave, threshold):
 
 
 torch.cuda.empty_cache()
-DEVICE = "cuda"
+DEVICE = "cpu"
 # network settings
 batch_size = 1
 n_class = 2
@@ -274,6 +275,21 @@ cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
 model.load_state_dict(torch.load('./output/trained_net.p'))
 model.eval()
+x = torch.randn(batch_size, 5, 161, 105, requires_grad=True)
+torch_out = model(x)
+torch.onnx.export(model,x,"trainednet.onnx",export_params=True)
+y = torch.rand(1, 5, 161, 105)
+traced_script_module = torch.jit.trace(model, y)
+# modelr = torchvision.models.resnet18()
+#
+# # An example input you would normally provide to your model's forward() method.
+# example = torch.rand(1, 3, 224, 224)
+#
+# # Use torch.jit.trace to generate a torch.jit.ScriptModule via tracing.
+# traced_script_module = torch.jit.trace(modelr, example)
+traced_script_module.save("trainednet.pt")
+output = traced_script_module(torch.ones(1, 5, 161, 105))
+print(output[0,:5])
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
 weights = torch.tensor([1, 19], dtype=torch.float32)
 weights = weights / weights.sum()
