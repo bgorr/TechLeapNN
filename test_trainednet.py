@@ -313,7 +313,7 @@ results_f = open(results_filename, 'wb')
 pickle.dump(results, results_f)
 results_f.close()
 
-matplotlib.use('Agg')
+matplotlib.use('TkAgg')
 
 # plotting
 for i in range(len(results[0])):
@@ -368,5 +368,6 @@ for i in range(len(results[0])):
         plt.imshow(yhat)
         plt.axis("off")
         plt.title("Prediction")
+        plt.show()
         plt.savefig('./allplots/fig{}{}.png'.format(i, j))
         plt.close('all')

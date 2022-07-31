@@ -43,7 +43,7 @@ class DiceLoss(nn.Module):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(5, 32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(4, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.mp = nn.MaxPool2d(2)
@@ -247,7 +247,7 @@ n_epochs = 200
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-dataset_dir = "./output/landsat_datasets_manual_5bands/"
+dataset_dir = "./output/landsat_datasets_manual_4bands_all/"
 # test_filename = "./output/landsat_dataset_scene2.p"
 # train_filename = "./output/landsat_dataset.p"
 # test_f = open(test_filename, "rb")
@@ -274,9 +274,9 @@ test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model,input_size=(5,161,105),batch_size=-1, device='cuda'))
+print(summary(model,input_size=(4,161,105),batch_size=-1, device='cuda'))
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
-weights = torch.tensor([1, 19], dtype=torch.float32)
+weights = torch.tensor([1, 1], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
@@ -314,7 +314,7 @@ for i in range(len(results[0])):
         green = X[j, 1, :, :].detach().numpy()
         red = X[j, 2, :, :].detach().numpy()
         ir = X[j, 3, :, :].detach().numpy()
-        swir = X[j, 4, :, :].detach().numpy()
+        #swir = X[j, 4, :, :].detach().numpy()
         # clouds = X[j, 5, :, :].detach().numpy()
         # temp = X[j, 6, :, :].detach().numpy()
         img = np.array([red, green, blue])
@@ -333,8 +333,8 @@ for i in range(len(results[0])):
         plt.imshow(red)
         plt.subplot(2, 4, 3)
         plt.imshow(ir)
-        plt.subplot(2, 4, 4)
-        plt.imshow(swir)
+        #plt.subplot(2, 4, 4)
+        #plt.imshow(swir)
         # plt.subplot(2, 4, 5)
         # plt.imshow(clouds)
         # plt.subplot(2, 4, 6)
