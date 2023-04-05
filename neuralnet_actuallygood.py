@@ -20,7 +20,8 @@ from mpl_toolkits import axes_grid1
 import pickle
 import warnings
 
-#warnings.filterwarnings("error")
+
+# warnings.filterwarnings("error")
 
 # PyTorch
 class DiceLoss(nn.Module):
@@ -29,7 +30,7 @@ class DiceLoss(nn.Module):
 
     def forward(self, inputs, targets, smooth=1):
         # comment out if your model contains a sigmoid or equivalent activation layer
-        #inputs = F.sigmoid(inputs)
+        # inputs = F.sigmoid(inputs)
 
         # flatten label and prediction tensors
         inputs = inputs.view(-1)
@@ -39,6 +40,8 @@ class DiceLoss(nn.Module):
         dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
 
         return 1 - dice
+
+
 # encoding
 class CNN(nn.Module):
     def __init__(self):
@@ -182,14 +185,15 @@ def calc_wiou(p, t):
 
 def listMean(my_list, mean_type):
     if mean_type == 1:
-        avg1 = [float(sum(col))/len(col) for col in zip(*my_list)]
-        return sum(avg1)/len(avg1)
+        avg1 = [float(sum(col)) / len(col) for col in zip(*my_list)]
+        return sum(avg1) / len(avg1)
     if mean_type == 2:
-        return sum(my_list)/len(my_list)
+        return sum(my_list) / len(my_list)
 
 
 def round_metrics(a, b, c, d, e, f, r):
-    return round(a, r)*100, round(b, r)*100, round(c, r)*100, round(d, r)*100, round(e, r)*100, round(f, r)*100
+    return round(a, r) * 100, round(b, r) * 100, round(c, r) * 100, round(d, r) * 100, round(e, r) * 100, round(f,
+                                                                                                                r) * 100
 
 
 def test(doSave, threshold):
@@ -254,18 +258,17 @@ dataset_dir = "./output/landsat_datasets_manual_4bands_all/"
 # train_f = open(train_filename, "rb")
 full_dataset = []
 for str in os.listdir(dataset_dir):
-    f = open(dataset_dir+str,"rb")
+    f = open(dataset_dir + str, "rb")
     dataset = pickle.load(f)
     f.close()
     full_dataset.extend(dataset)
 
-
-#val_set = pickle.load(test_f)
-#train_dataset = pickle.load(train_f)
-#test_f.close()
-#train_f.close()
-fifteenpercent = int(len(full_dataset)*0.15)
-train_set, val_set = torch.utils.data.random_split(full_dataset, [len(full_dataset)-fifteenpercent, fifteenpercent])
+# val_set = pickle.load(test_f)
+# train_dataset = pickle.load(train_f)
+# test_f.close()
+# train_f.close()
+fifteenpercent = int(len(full_dataset) * 0.15)
+train_set, val_set = torch.utils.data.random_split(full_dataset, [len(full_dataset) - fifteenpercent, fifteenpercent])
 # data loader
 random.seed(1319)
 train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
@@ -274,14 +277,14 @@ test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model,input_size=(4,161,105),batch_size=-1, device='cuda'))
+print(summary(model, input_size=(4, 161, 105), batch_size=-1, device='cuda'))
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
 weights = torch.tensor([1, 100], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
-#loss_fn = nn.CrossEntropyLoss(weight=weights).to(DEVICE)
-#loss_fn = nn.BCEWithLogitsLoss()
+# loss_fn = nn.CrossEntropyLoss(weight=weights).to(DEVICE)
+# loss_fn = nn.BCEWithLogitsLoss()
 loss_fn = DiceLoss()
 
 # run for NT Data Set
@@ -314,7 +317,7 @@ for i in range(len(results[0])):
         green = X[j, 1, :, :].detach().numpy()
         red = X[j, 2, :, :].detach().numpy()
         ir = X[j, 3, :, :].detach().numpy()
-        #swir = X[j, 4, :, :].detach().numpy()
+        # swir = X[j, 4, :, :].detach().numpy()
         # clouds = X[j, 5, :, :].detach().numpy()
         # temp = X[j, 6, :, :].detach().numpy()
         img = np.array([red, green, blue])
@@ -333,8 +336,8 @@ for i in range(len(results[0])):
         plt.imshow(red)
         plt.subplot(2, 4, 3)
         plt.imshow(ir)
-        #plt.subplot(2, 4, 4)
-        #plt.imshow(swir)
+        # plt.subplot(2, 4, 4)
+        # plt.imshow(swir)
         # plt.subplot(2, 4, 5)
         # plt.imshow(clouds)
         # plt.subplot(2, 4, 6)
