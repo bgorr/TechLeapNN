@@ -46,11 +46,11 @@ class DiceLoss(nn.Module):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(4, 32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(5, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.mp = nn.MaxPool2d(2)
-        self.fc = nn.Linear(33280, 2)
+        self.fc = nn.Linear(8192, 2)
 
     def forwardxd(self, x):
         in_size = x.size(0)
@@ -61,6 +61,7 @@ class CNN(nn.Module):
         x3 = F.relu(self.conv3(x2))
         x3 = self.mp(x3)  # size=(N, 128, x.H/8, x.H/8)
         x4 = x3.view(in_size, -1)
+        #print(x4.shape)
         x4 = self.fc(x4)  # size=(N, n_class)
         y = F.log_softmax(x4, dim=0)  # size=(N, n_class)
         return x1, x2, x3, x4, y
@@ -78,7 +79,7 @@ class FCN8s(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn2 = nn.BatchNorm2d(32)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1, output_padding=1)
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1)
         self.bn3 = nn.BatchNorm2d(16)
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
@@ -251,7 +252,7 @@ n_epochs = 200
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-dataset_dir = "./output/landsat_datasets_manual_4bands_all/"
+dataset_dir = "./output/manual_5bands_64/"
 # test_filename = "./output/landsat_dataset_scene2.p"
 # train_filename = "./output/landsat_dataset.p"
 # test_f = open(test_filename, "rb")
@@ -277,7 +278,7 @@ test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model, input_size=(4, 161, 105), batch_size=-1, device='cuda'))
+print(summary(model, input_size=(5, 64, 64), batch_size=-1, device='cuda'))
 optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
 weights = torch.tensor([1, 100], dtype=torch.float32)
 weights = weights / weights.sum()

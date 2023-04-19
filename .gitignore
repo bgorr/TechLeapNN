@@ -8,3 +8,5 @@ neuralnettest.py
 randomforest.py
 tfnn.py
 lr.py
+plumes
+sentinel_data

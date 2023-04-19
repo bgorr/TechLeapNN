@@ -17,11 +17,11 @@ import pandas as pd
 
 # you'll have to point these to your dataset location
 img_dir = "/home/ben/Documents/landsat_downloads/scene1/landsat_bands"
-lbl_path = "/home/ben/Documents/landsat_downloads/scene1/cirrus_groundtruth.tif"
+lbl_path = "/home/ben/Documents/landsat_downloads/scene1/manual_groundtruth.tif"
 
 totalTensor = torch.Tensor()
 lbl_totalTensor = torch.Tensor()
-bands = np.zeros(shape=(7911, 7781, 11))
+bands = np.zeros(shape=(7911,7781, 11))
 for string in os.listdir(img_dir):  # len(os.listdir(img_dir))
     print(string)
     substr = string[42:44]
@@ -34,7 +34,7 @@ for string in os.listdir(img_dir):  # len(os.listdir(img_dir))
     band_data = Image.open(band_path)
     band_array = np.array(band_data)
     bands[:, :, band-1] = band_array
-bands = np.delete(bands, [0,5,6,7,8,9,10], 2)
+bands = np.delete(bands, [0,6,7,8,9,10], 2)
 #bands = np.delete(bands, 4, 2)
 #bands = np.delete(bands, 7, 2)
 label = Image.open(lbl_path)
@@ -45,11 +45,11 @@ label = torch.as_tensor(label_array)
 
 # convert 3200x3200 images into 570 161x105 images
 # label = label.permute(1, 0)
-height = 512
-width = 512
+height = 64
+width = 64
 image = image.permute(2,0,1)
 patches = image.unfold(1, height, height).unfold(2, width, width)
-patches = patches.contiguous().view(4, patches.size(1)*patches.size(2), height, width)
+patches = patches.contiguous().view(5, patches.size(1)*patches.size(2), height, width)
 lbl_patches = label.unfold(0, height, height).unfold(1, width, width)
 lbl_patches = lbl_patches.contiguous().view(-1, 1, height, width)
 patches = patches.permute(1, 0, 2, 3)
@@ -60,11 +60,16 @@ image_tensor_slices = []
 label_tensor_slices = []
 for i in range(patches.size(0)):
     if not patches[i, :, :, :].isnan().any():
-        if torch.isin(1, lbl_patches[i, :, :, :]).any():
+        if not torch.lt(patches[i,:,:,:], 0.1).any():
             image_tensor_slices.append(patches[i:i + 1, :, :, :])
             label_tensor_slices.append(lbl_patches[i:i + 1, :, :, :])
         else:
-            print('--> IMAGE PATCH CONTAINS NO TRUE VALUES')
+            print('--> image patch is a border image')
+        # if torch.isin(1, lbl_patches[i, :, :, :]).any():
+        #     image_tensor_slices.append(patches[i:i + 1, :, :, :])
+        #     label_tensor_slices.append(lbl_patches[i:i + 1, :, :, :])
+        # else:
+        #    print('--> IMAGE PATCH CONTAINS NO TRUE VALUES')
     else:
         print('--> IMAGE PATCH CONTAINS NANs')
 
@@ -132,7 +137,7 @@ my_conv.weight = W
 #     dataset.append((image, target3))
 
 dataset = list()
-for i in range(totalTensor.size(0)):
+for i in range(50):
     dat = totalTensor[i, :, :, :].clone()
     target = lbl_totalTensor[i, :, :, :].clone()
     dat, target = Variable(dat).float(), Variable(target).float()
@@ -156,7 +161,7 @@ for i in range(len(dataset)):
     green.to_csv(str(i) + '_green.csv', index=False, header=False)
     red.to_csv(str(i) + '_red.csv', index=False, header=False)
     nir.to_csv(str(i) + '_nir.csv', index=False, header=False)
-filename = './output/landsat_dataset_scene1_cirrus_5bands.p'
+filename = 'output/manual_5bands_64/landsat_dataset_scene1_manual_5bands_all.p'
 f = open(filename, 'wb')
 pickle.dump(dataset, f)
 f.close()
