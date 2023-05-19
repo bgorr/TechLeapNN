@@ -46,11 +46,11 @@ class DiceLoss(nn.Module):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(5, 32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.mp = nn.MaxPool2d(2)
-        self.fc = nn.Linear(8192, 2)
+        self.fc = nn.Linear(33280, 2)
 
     def forwardxd(self, x):
         in_size = x.size(0)
@@ -79,7 +79,7 @@ class FCN8s(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn2 = nn.BatchNorm2d(32)
-        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1)
+        self.deconv3 = nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1, dilation=1, output_padding=1)
         self.bn3 = nn.BatchNorm2d(16)
         self.classifier = nn.Conv2d(16, n_class, kernel_size=1)
 
@@ -246,13 +246,13 @@ DEVICE = "cuda"
 # network settings
 batch_size = 1
 n_class = 2
-n_epochs = 200
+n_epochs = 1000
 
 # set threshold
-thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
+thres = torch.Tensor([.4]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-dataset_dir = "./output/manual_5bands_64/"
+dataset_dir = "./output/manual_3bands_161_optimistic/"
 # test_filename = "./output/landsat_dataset_scene2.p"
 # train_filename = "./output/landsat_dataset.p"
 # test_f = open(test_filename, "rb")
@@ -279,14 +279,14 @@ test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model, input_size=(5, 64, 64), batch_size=-1, device='cuda'))
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
+print(summary(model, input_size=(3, 161, 105), batch_size=-1, device='cuda'))
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 weights = torch.tensor([1, 100], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights
 weights = weights / weights.sum()
 # loss_fn = nn.CrossEntropyLoss(weight=weights).to(DEVICE)
-# loss_fn = nn.BCEWithLogitsLoss()
+#loss_fn = nn.BCEWithLogitsLoss()
 loss_fn = DiceLoss()
 
 # run for NT Data Set
@@ -298,9 +298,9 @@ test_dat = []
 for dat, _ in test_loader:
     test_dat.append(dat)
 
-torch.save(model.state_dict(), './output/trained_net.p')
+torch.save(model.state_dict(), './output/trained_net_3o.p')
 
-results_filename = './output/results.p'
+results_filename = './output/results_3o.p'
 results_f = open(results_filename, 'wb')
 pickle.dump(results, results_f)
 results_f.close()
@@ -318,7 +318,7 @@ for i in range(len(results[0])):
         blue = X[j, 0, :, :].detach().numpy()
         green = X[j, 1, :, :].detach().numpy()
         red = X[j, 2, :, :].detach().numpy()
-        ir = X[j, 3, :, :].detach().numpy()
+        #ir = X[j, 3, :, :].detach().numpy()
         # swir = X[j, 4, :, :].detach().numpy()
         # clouds = X[j, 5, :, :].detach().numpy()
         # temp = X[j, 6, :, :].detach().numpy()
@@ -336,8 +336,8 @@ for i in range(len(results[0])):
         plt.imshow(img)
         plt.subplot(2, 4, 2)
         plt.imshow(red)
-        plt.subplot(2, 4, 3)
-        plt.imshow(ir)
+        #plt.subplot(2, 4, 3)
+        #plt.imshow(ir)
         # plt.subplot(2, 4, 4)
         # plt.imshow(swir)
         # plt.subplot(2, 4, 5)
@@ -352,5 +352,5 @@ for i in range(len(results[0])):
         plt.imshow(yhat)
         plt.subplot(2, 4, 8)
         plt.imshow(yest)
-        plt.savefig('./allplots/fig{}{}.png'.format(i, j))
+        plt.savefig('./allplots/3o/fig{}{}.png'.format(i, j))
         plt.close('all')

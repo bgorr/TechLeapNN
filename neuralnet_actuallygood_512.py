@@ -50,7 +50,7 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.mp = nn.MaxPool2d(2)
-        self.fc = nn.Linear(8192, 2)
+        self.fc = nn.Linear(524288, 2)
 
     def forwardxd(self, x):
         in_size = x.size(0)
@@ -246,13 +246,13 @@ DEVICE = "cuda"
 # network settings
 batch_size = 1
 n_class = 2
-n_epochs = 200
+n_epochs = 500
 
 # set threshold
 thres = torch.Tensor([.666]).to(DEVICE)  # try: 0, -.2, -.1, .1, .2, .3, .4
 flnm = "666"
 
-dataset_dir = "./output/manual_5bands_64/"
+dataset_dir = "./output/manual_5bands_512/"
 # test_filename = "./output/landsat_dataset_scene2.p"
 # train_filename = "./output/landsat_dataset.p"
 # test_f = open(test_filename, "rb")
@@ -279,8 +279,8 @@ test_loader = torch.utils.data.DataLoader(dataset=val_set, batch_size=batch_size
 # initialize model
 cnn_model = CNN().to(DEVICE)
 model = FCN8s(pretrained_net=cnn_model, n_class=n_class).to(DEVICE)
-print(summary(model, input_size=(5, 64, 64), batch_size=-1, device='cuda'))
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.5)
+print(summary(model, input_size=(5, 512, 512), batch_size=-1, device='cuda'))
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 weights = torch.tensor([1, 100], dtype=torch.float32)
 weights = weights / weights.sum()
 weights = 1.0 / weights

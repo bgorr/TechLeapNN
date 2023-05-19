@@ -10,3 +10,4 @@ tfnn.py
 lr.py
 plumes
 sentinel_data
+*.csv
